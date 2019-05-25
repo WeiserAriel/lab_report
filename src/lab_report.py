@@ -195,7 +195,7 @@ class Device:
         logging.debug(msg="Open SSH Client to :" + str(ip))
         try:
             ssh.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
-            ssh.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=False)
+            ssh.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
         except Exception as ex:
             logging.error(msg="SSH Client wasn't established!")
 
@@ -541,7 +541,7 @@ def split_range(part):
 
     starts = int(tail.split('-')[0])
     ends = int(tail.split('-')[1])
-    while starts < ends:
+    while starts <= ends:
         num_of_zeros = structure - len(str(starts))
         tmp = '0'*num_of_zeros + str(starts)
         tmp_dev = base + tmp
@@ -694,6 +694,9 @@ class XlsWriter():
 
         #adding autofilter
         logging.debug("adding autofiler")
+        #trying to do autofit for columns
+        logging.debug("trying to add column auto fit")
+
         worksheet.autofilter(0,0,int(len(self.devices_objects)+1),int(len(fieldnames) - 1))
         logging.debug("closing workbook")
         workbook.close()
