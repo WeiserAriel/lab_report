@@ -775,6 +775,7 @@ def main():
     logging.info("lab report Script Start...")
     email_list = parse_email_file(args.email)
     device_list_ip = parse_device_list(args.device_list)
+    print(device_list_ip)
     devices_obj = Create_devices_objects(device_list_ip)
     xls = XlsWriter(devices_obj,email_list)
 
