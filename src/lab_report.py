@@ -37,6 +37,7 @@ class Device:
         self.hw_address = 'n/a'
         #start collecting device properties:
         self.get_all_device_properties()
+        logging.debug("finish building device class for :" + device_name)
     
     def get_all_device_properties(self):
         #checking ping to MGMT
@@ -270,6 +271,7 @@ class Linux_Host(Device):
         self.check_ilo_works()
         if self.shell:
             self.get_all_properties()
+        logging.debug("finish building linux host class for " + device_name)
 
 
     def get_all_properties(self):
@@ -292,6 +294,7 @@ class Linux_Host(Device):
         self.dmidecode = super().get_dmidecode()
 
     def get_os_version(self):
+        logging.debug("trying to get os version for : " + self.device_name)
         cmd = 'cat /etc/redhat-release'
         out = super().run_command(cmd , self.shell)
         if out:
@@ -340,6 +343,7 @@ class Switch(Device):
         
         #collect switch proper
         self.get_all_properties()
+        logging.debug("finish building switch class for : " + device_name)
 
     def get_all_properties(self):
         logging.debug("Getting all properties for switch : " + self.device_name)
@@ -385,6 +389,7 @@ class Apl_Host(Device):
         has_shell = self.initial_apl_shell()
         # start collecting information
         self.get_all_properties(has_shell)
+        logging.debug("finish building appliance class for :" + device_name)
 
     # start collecting information
     def get_all_properties(self, has_shell):
@@ -614,11 +619,14 @@ def Create_devices_objects(device_list_ip):
     device_list = []
 
     for device in device_list_ip.keys():
+        logging.debug(" start Creating device object for :" + device)
         owner = device_list_ip[device]
         #identify from DHCP what type of device is it:
+        logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device
         out = dev.run_command(cmd,dev.shell)
-        if out:
+        #if device has no next server it means that it was not found in DHCP
+        if 'next-server' in out:
             logging.debug("device exist in dhcp : " + device)
             #TODO - need to check which row starts with IP
             rows = out.split('\n')
@@ -632,19 +640,22 @@ def Create_devices_objects(device_list_ip):
             
             if 'apl' in out:
                 #check if this is gen2 or gen1
+                logging.debug("device identiry as appliance : " + device_name)
                 if 'gen1' in out:
                     tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner)
 
                 else:
                     tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev,owner)
             elif 'sw' in out:
+                logging.debug("device identify as switch : " + device_name)
                 tmp_device = Switch(device_ip, device_name, 'switch',dev,owner)
             else:
+                logging.debug("device identify as linux host : " + device_name)
                 tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner)
-
+            logging.debug("append deivice after creation to device list : " + device_name)
             device_list.append(tmp_device)
         else:
-            logging.debug("device not exist in dhcp : " + device)
+            logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
     return device_list
 
         #Print the results from the container.
