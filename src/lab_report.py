@@ -55,7 +55,9 @@ class Device:
         cmd = 'dmidecode -s system-serial-number'
         out = self.run_command(cmd, self.shell)
         time.sleep(6)
-        if out:
+        if 'not found' in out:
+            return 'n/a'
+        elif out:
             return out.splitlines()[1]
         else:
             logging.fatal("couldn't find dmidecode for : " + self.device_name)
@@ -73,9 +75,13 @@ class Device:
             else:
                 return 'n/a'
         else:
-            logging.critical("couldn't find ofed version on " + self.device_name)
-            ofed = 'n/a'
-            return ofed
+            if 'command not found' in out:
+                logging.debug("OFED is not installed on :" + self.device_name)
+                ofed = 'Not Installed'
+            else:
+                logging.critical("couldn't find ofed version on " + self.device_name)
+                ofed = 'n/a'
+        return ofed
 
     def find_total_memory(self):
         logging.debug("Find Total Memory on : " + self.device_name)
@@ -295,12 +301,18 @@ class Linux_Host(Device):
 
     def get_os_version(self):
         logging.debug("trying to get os version for : " + self.device_name)
-        cmd = 'cat /etc/redhat-release'
+        cmd = 'cat /etc/*-re*'
         out = super().run_command(cmd , self.shell)
         if out:
-            self.os_version = out.splitlines()[1]
-        else:
-            logging.critical("Couldn't find os version for " + super().device_name)
+            rows = out.splitlines()
+            for row in rows:
+                if 'PRETTY_NAME=' in row:
+                    os = row.split('=')[1].replace("\"",'')
+                    logging.debug("os version for device : " + self.device_name + " is" + str(os))
+                    self.os_version = os
+                    break
+            else:
+                logging.critical("Couldn't find os version for " + self.device_name)
 
     def get_ofed(self):
         self.ofed = super().get_ofed_version()
@@ -637,16 +649,22 @@ def Create_devices_objects(device_list_ip):
                     device_name = row.split(';')[2]
                     device_ip = row.split(';')[0]
                     break
+            else:
+                logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
+                logging.debug("out  : " + out)
+                logging.debug("regex : " + regex)
+                logging.debug("Continue to the next device... ")
+                continue
             
-            if 'apl' in out:
+            if 'apl' in row:
                 #check if this is gen2 or gen1
                 logging.debug("device identiry as appliance : " + device_name)
-                if 'gen1' in out:
+                if 'gen1' in row:
                     tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner)
 
                 else:
                     tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev,owner)
-            elif 'sw' in out:
+            elif 'sw' in row:
                 logging.debug("device identify as switch : " + device_name)
                 tmp_device = Switch(device_ip, device_name, 'switch',dev,owner)
             else:
