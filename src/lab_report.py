@@ -68,7 +68,7 @@ class Device:
         cmd = 'ofed_info -s'
         out = self.run_command(cmd, self.shell)
         regex = '(MLNX_OFED_LINUX-)(.*)'
-        if out:
+        if out and 'command not found' not in out:
             ofed = self.search_in_regex(out, regex)
             if ofed:
                 return str(ofed[0][1]).replace('\r','').replace(' ','')
@@ -804,7 +804,6 @@ def main():
     logging.info("lab report Script Start...")
     email_list = parse_email_file(args.email)
     device_list_ip = parse_device_list(args.device_list)
-    print(device_list_ip)
     devices_obj = Create_devices_objects(device_list_ip)
     xls = XlsWriter(devices_obj,email_list)
 
