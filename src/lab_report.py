@@ -597,7 +597,6 @@ def get_devices_in_row(row):
 
 
 def parse_device_list(device_list):
-    
     dev_container = {}
     with open(device_list, 'r') as f:
         data = f.read()
@@ -608,6 +607,11 @@ def parse_device_list(device_list):
             else:
                 devs_in_row_dict = get_devices_in_row(row)
                 for dev in devs_in_row_dict.keys():
+                    # check if the device is already registered on any member, if it is registered
+                    # we can skip it, if not we need to registered it as un used.
+                    if (is_device_in_list(dev_container, dev)):
+                        logging.debug("skipping current device since it's already registered on someone : " + dev)
+                        continue
                     dev_container[dev] = devs_in_row_dict[dev]
 
     return dev_container
@@ -622,6 +626,16 @@ def parse_email_file(filename):
             logging.debug("adding new email address : " + row)
             lst.append(row)
     return lst
+
+def is_device_in_list(dev_container, dev):
+    logging.debug("verifiying if the device is in the list")
+    for device in dev_container.keys():
+        if device == dev:
+            logging.debug("device exist in device list : " + dev)
+            return True
+    else:
+        logging.debug("device is not exist in device list : " + dev)
+        return False
 
 
 def Create_devices_objects(device_list_ip):
