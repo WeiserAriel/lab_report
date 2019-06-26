@@ -398,7 +398,8 @@ class Apl_Host(Device):
         self.ofed = 'n/a'
         self.os_version = 'n/a'
         self.dmidecode = 'n/a'
-        has_shell = self.initial_apl_shell()
+        if self.ip_reply != 'n/a':
+            has_shell = self.initial_apl_shell()
         # start collecting information
         self.get_all_properties(has_shell)
         logging.debug("finish building appliance class for :" + device_name)
@@ -437,7 +438,7 @@ class Apl_Host(Device):
         regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
         out = super().run_command(cmd, self.shell)
         if out:
-            self.os_version = out[4]
+            self.os_version = out.splitlines()[4].split(':')[1].replace(' ', '')
         else:
             logging.critical("Couldn't retrived apl version for : " + super().device_name)
             self.os_version = 'n/a'
