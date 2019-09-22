@@ -398,10 +398,11 @@ class Apl_Host(Device):
         self.ofed = 'n/a'
         self.os_version = 'n/a'
         self.dmidecode = 'n/a'
-        if self.ip_reply != 'n/a':
+        #if self.ip_reply != 'n/a':
+        if self.shell:
             has_shell = self.initial_apl_shell()
         # start collecting information
-        self.get_all_properties(has_shell)
+            self.get_all_properties(has_shell)
         logging.debug("finish building appliance class for :" + device_name)
 
     # start collecting information
