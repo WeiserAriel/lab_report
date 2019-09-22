@@ -439,7 +439,8 @@ class Apl_Host(Device):
         regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
         out = super().run_command(cmd, self.shell)
         if out:
-            self.os_version = out.splitlines()[4].split(':')[1].replace(' ', '')
+            list = super.search_in_regex(out, regex)
+            self.os_version = list[0][4]
         else:
             logging.critical("Couldn't retrived apl version for : " + super().device_name)
             self.os_version = 'n/a'
