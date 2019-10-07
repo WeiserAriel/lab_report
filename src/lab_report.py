@@ -662,7 +662,7 @@ def Create_devices_objects(device_list_ip):
             for row in rows:
                 regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
                 found = Device.search_in_regex(row, regex)
-                if found:
+                if found and (row.split('; ')[2] == device):
                     device_name = row.split(';')[2]
                     device_ip = row.split(';')[0]
                     break
