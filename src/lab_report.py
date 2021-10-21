@@ -859,9 +859,16 @@ def Create_devices_objects(device_list_ip):
                 logging.debug("device identiry as appliance : " + device_name)
                 if 'gen1' in row:
                     tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner)
-
+                elif 'gen2.5' in row:
+                    tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner)
+                elif 'gen2' in row:
+                    tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner)
+                elif 'gen3' in row:
+                    tmp_device = Apl_Host(device_ip, device_name, 'GEN3', dev,owner)
+                elif 'gen4' in row:
+                    tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
                 else:
-                    tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev,owner)
+                    logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
             elif 'sw' in row:
                 logging.debug("device identify as switch : " + device_name)
                 tmp_device = Switch(device_ip, device_name, 'switch',dev,owner)
