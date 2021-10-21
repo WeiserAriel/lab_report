@@ -18,6 +18,11 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+import json
+import time
+import shutil
+
+
 
 import csv
 #from pyping.core import *
@@ -48,8 +53,93 @@ class Device:
                 self.ip_reply= 'No'
         else:
             self.ip_reply = 'No'
-        
-    
+
+    def get_name_of_json(self,function):
+        if 'get_version_json' in function:
+            return 'version.json'
+        elif 'interface_ib_status' in function:
+            return'interface_ib_status.json'
+        elif 'asic-version' in function:
+            return 'asic_version.json'
+        elif 'lshca' in function:
+            return 'lshca.json'
+        elif 'manufacture'in function:
+            return 'manufacture.json'
+        elif 'model' in function:
+            return 'model.json'
+        else:
+            logging.error('could not get name of json')
+
+    def dump_file(self, function, data, root_path):
+        try:
+            logging.debug('Trying to dump file for ' + function + 'of device name : ' + str(self.device_name))
+            location = root_path + str(self.device_name).replace(' ', "") + os.sep
+            filename = location + self.get_name_of_json(function)
+            if not os.path.exists(location):
+                # need to create a new folder
+                os.makedirs(location, exist_ok=True)
+            try:
+                logging.debug('dump json to file: ')
+                #WA
+                if function == 'manufacture' or function == 'product_model':
+                    value = None
+                    try:
+                        value = re.findall('\r\n(.*)\r\n', data)
+                        if value:
+                            dic_ = dict()
+                            dic_[function] = value[0]
+                            dic_['Device_Name'] = str(self.device_name)
+                            with open(filename, 'w') as outfile:
+                                json.dump(dic_, outfile)
+                            logging.info('wrote ' + str(function) + ' of device : ' + str(self.device_name))
+                            return
+                            #exit from function
+                    except Exception as e:
+                            logging.error('could not find manufacture or model for ' + str(self.device_name) + ' ' + str(e))
+                elif function == 'lshca':
+                    s_index = str(data).index('[')
+                    e_index = str(data).rindex(']')
+                else:
+                    s_index = str(data).index('{')
+                    e_index = str(data).rindex('}')
+                final_string = str(data[s_index:e_index + 1]).replace('\n', '').replace('\r', '')
+                final_string = self.remove_hostname(final_string, str(self.device_name).replace(' ',''))
+                j = json.loads(final_string)
+                with open(filename, 'w') as outfile:
+                    # some commands return list:
+                    if type(j) == type(list()):
+
+                        try:
+                            for d in j:
+                                d['Device_Name'] = str(self.device_name)
+                                json.dump(j, outfile)
+                        except Exception as e:
+                            logging.error('Exception in adding device name to dictionary ' + str(e))
+                    else:
+                        j['Device_Name'] = str(self.device_name)
+                        json.dump(j, outfile)
+            except Exception as e:
+                logging.error('Exception in dumping json to device : '+ str(self.device_name) + ' ' + str(e))
+
+        except Exception as e:
+            logging.error('Exception recieive in dump file for :' + self.device_name)
+
+    def remove_hostname(self,final_string, device_name ):
+        logging.debug('Checking if the hostname returned in the output')
+        str = final_string
+        try:
+            reg = '\[root@.*]'
+            result = re.findall(reg,final_string)
+            if result:
+                str = re.sub(reg, "", final_string)
+                return str
+
+            else:
+                return str
+        except Exception as e:
+            logging.error('Exception in remove hostname ' +  device_name + " "+ str(e))
+
+
     def get_dmidecode(self):
         logging.debug("trying to find dmidecode for : " + self.device_name)
         cmd = 'dmidecode -s system-serial-number'
@@ -162,7 +252,7 @@ class Device:
                     ilo_ip = row.split(';')[0]
                     return ilo_ip
 
-        logging.error("Couldn't find ilo IP for " + self.device_name)
+        logging.critical("Couldn't find ilo IP for " + self.device_name)
         return 'n/a'
 
 
@@ -204,7 +294,7 @@ class Device:
             ssh.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
             ssh.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
         except Exception as ex:
-            logging.error(msg="SSH Client wasn't established!")
+            logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
 
         logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
         return ssh
@@ -219,7 +309,7 @@ class Device:
                 shell.recv(1024)
                 # time.sleep(10)
             except Exception as e:
-                logging.error(" Exception number " + str(i) + "in create shell : " + str(e))
+                logging.critical(" Exception number " + str(i) + " in create shell : "+ str(e))
                 continue
             break
 
@@ -227,7 +317,6 @@ class Device:
             return shell
         else:
             return None
-
 
 
     @staticmethod
@@ -240,6 +329,7 @@ class Device:
           :return: 0 if the expected string was found in output.
           '''
         # sleeping for 3 seconds to the command will be executed after shell prompt is printed.
+
         shell.send(cmd + '\n')
         out = ''
         while True:
@@ -290,6 +380,42 @@ class Linux_Host(Device):
             self.get_ofed()
             self.get_os_version()
             self.get_dmidecode()
+            self.lshca()
+            self.getServerModelandType()
+
+    def getModel(self):
+        logging.info('Starting Get Model function for device : ' + str(self.device_name))
+        try:
+            cmd = r'''dmidecode | grep -A3 '^System Information' | grep Product | cut -d ':' -f 2'''
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('product_model', out, Constants.root_servers)
+
+        except Exception as e:
+            logging.error('Exception in get model function : ' + str(e))
+
+    def getManufacture(self):
+        logging.info('Starting Get Manufacture function for device : ' + str(self.device_name))
+        try:
+            cmd = r'''dmidecode | grep -A3 '^System Information' | grep Manufacture | cut -d ':' -f 2'''
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('manufacture', out, Constants.root_servers)
+
+        except Exception as e:
+            logging.error('Exception in manufacture function : ' + str(e))
+
+    def getServerModelandType(self):
+        self.getManufacture()
+        self.getModel()
+
+    def lshca(self):
+        logging.info('Starting lshca function for device : ' + str(self.device_name))
+        try:
+            cmd = '/hpc/local/bin/lshca -m normal -j -w roce'
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('lshca', out, Constants.root_hcas)
+
+        except Exception as e:
+            logging.error('Exception in lshca function : ' + str(e))
 
     def get_all_values(self):
         #Owner,Device Name,Device_type, MGMT_ip, MGMT Ping, ilo IP, ilo ping. HW address, CA Type#1, CA Type #2, CA Type#3, CA Type#4, Total Memory, OFED Version, OS Version, dmidecode
@@ -357,10 +483,60 @@ class Switch(Device):
         self.get_all_properties()
         logging.debug("finish building switch class for : " + device_name)
 
+
+
+
+
+
+    def get_version_json(self):
+        logging.debug("Getting get_version_json for switch : " + self.device_name)
+        cmd = 'show version | json-print'
+        # shell Object is not ready so sleeping for 3 seconds.
+        time.sleep(3)
+        try:
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('get_version_json', out, Constants.root_switch)
+        except Exception as e:
+            logging.error("Exception in get_version_json : " + str(e))
+        logging.info('Done with get_verion ')
+
+    def get_interface_ib_status(self):
+        logging.debug("Sending get_interface_ib_status for switch : " + self.device_name)
+        cmd = "show interfaces ib status | json-print"
+        # shell Object is not ready so sleeping for 3 seconds.
+        time.sleep(3)
+        try:
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('get_interface_ib_status', out,Constants.root_switch)
+        except Exception as e:
+            logging.error("Exception in get_interface_ib_status: " + str(e))
+        logging.info('Done with get interfaces ib status ')
+
+    def get_asic_version(self):
+        logging.debug("Sending get_asic_version for switch : " + self.device_name)
+        cmd = 'show asic-version | json-print'
+        # shell Object is not ready so sleeping for 3 seconds.
+        time.sleep(3)
+        try:
+            out = super().run_command(cmd, self.shell)
+            super().dump_file('show asic-version', out,Constants.root_switch)
+        except Exception as e:
+            logging.error("Exception in show asic-version | json-print " + str(e))
+
+
+    def get_switch_info(self):
+        self.get_version_json()
+        #self.get_interface_ib_status()
+        self.get_asic_version()
+
+
+
     def get_all_properties(self):
         logging.debug("Getting all properties for switch : " + self.device_name)
         if self.shell:
+            self.shell = Apl_Host.set_enable_configure_terminal(self.shell)
             self.get_os_version()
+            self.get_switch_info()
 
 
     def get_all_values(self):
@@ -467,14 +643,15 @@ class Apl_Host(Device):
     def get_ilo_ip(self):
         self.ilo_ip = super().get_device_ilo()
 
-    def set_enable_configure_terminal(self):
+    @staticmethod
+    def set_enable_configure_terminal(shell):
         time.sleep(5)
         logging.debug("running 'enable' and ' configure terminal'")
         i = 0
         commandsList = ['enable', 'configure terminal']
         expectedList = ['#', '(config)']
         for cmd, expect in zip(commandsList, expectedList):
-            out = super().run_command(cmd=cmd, shell=self.shell)
+            out = Device.run_command(cmd=cmd, shell=shell)
             if expect in out:
                 logging.info(cmd + " command run successfully")
             else:
@@ -482,9 +659,12 @@ class Apl_Host(Device):
             i += 1
             time.sleep(2)
 
+        logging.debug('returning shell after running enable and configure terminal')
+        return shell
+
     def initial_apl_shell(self):
 
-        self.set_enable_configure_terminal()
+        self.shell = self.set_enable_configure_terminal()
         self.get_hw_address()
         has_shell = self.confiure_appliance_license()
         return has_shell
@@ -525,7 +705,8 @@ class Apl_Host(Device):
 
 
     def get_hw_address(self):
-        self.set_enable_configure_terminal()
+        #No need to call again configure terminal
+        #self.set_enable_configure_terminal()
         interfaces = ['eth0','mgmt0']
         for interface in interfaces:
             cmd = 'show interfaces ' +interface +' brief'
@@ -775,7 +956,8 @@ class XlsWriter():
          
         logging.info("Sending result for recepients")
         try:
-            full_path = self.filename 
+            full_path = self.filename
+            self.save_workbook(full_path)
             attachment = open(full_path, 'rb')
 
             part = MIMEBase('application', 'octet-stream')
@@ -796,12 +978,141 @@ class XlsWriter():
         server.quit()
         logging.info("Email sending is done")
 
+    def save_workbook(self,name):
+        logging.info('Saving workbook in : '  + str(Constants.root_report_lab))
+        try:
+            path_to_target = Constants.root_report_lab + os.sep + name
+            if os.path.exists(path_to_target):
+                logging.debug('File has found, removing it')
+                os.remove(path_to_target)
+
+            shutil.copy(name,path_to_target)
+        except Exception as e:
+            logging.error('Exception in save workbook ' + str(e))
+
+            
+
+
+class Constants():
+    def __init__(self):
+        pass
+
+    root_folder = "/qa/qa/arielwe/lab_report/stam"
+    root_report_lab = root_folder + os.sep + 'report' + os.sep
+    root_switch = root_folder + os.sep + 'switches' + os.sep
+    root_hcas = root_folder + os.sep + 'hcas' + os.sep
+    root_servers = root_folder + os.sep + 'servers' + os.sep
+
+class HCAs():
+    def __init__(self):
+        logging.info('Start getting all HCAs')
+        self.get_all_properties()
+        logging.info('Finished getting all HCAs info')
+
+    def get_all_properties(self):
+        string = """
+                    [
+                {
+                    "Desc": "Mellanox Technologies MT28800 Family [ConnectX-5 Ex]",
+                    "Dev": "#1",
+                    "FW": "16.30.1004",
+                    "PN": "MCX556A-EDAT  rev. A3",
+                    "PSID": "MT_0000000009",
+                    "SN": "MT1721X04408",
+                    "Tempr": "60",
+                    "bdf_devices": [
+                        {
+                            "Bond": "=N/A=",
+                            "BondMiiStat": "",
+                            "BondState": "",
+                            "CblLng": "",
+                            "CblPN": "",
+                            "CblSN": "",
+                            "HCA_Type": "MT4121",
+                            "IbNetPref": "fe80000000000000",
+                            "IpStat": "down",
+                            "Link": "IB",
+                            "LnkCapWidth": "x16 G4",
+                            "LnkStaWidth": "x16",
+                            "LnkStat": "down",
+                            "MST_device": "",
+                            "Net": "ib0",
+                            "Numa": "-1",
+                            "PCI_addr": "0000:10:00.0",
+                            "PGuid": "ec0d9a03002fb4d2",
+                            "PLid": "65535",
+                            "Parent_addr": "-",
+                            "PhyAnalisys": "",
+                            "PhyLinkStat": "",
+                            "PhyLnkSpd": "",
+                            "Port": "1",
+                            "RDMA": "mlx5_0",
+                            "RX_bps": "N/A",
+                            "Rate": "10",
+                            "RoCEstat": "N/A",
+                            "SMGuid": "",
+                            "SRIOV": "PF  ",
+                            "SwDescription": "",
+                            "TX_bps": "N/A",
+                            "VrtHCA": "Phys"
+                        },
+                        {
+                            "Bond": "=N/A=",
+                            "BondMiiStat": "",
+                            "BondState": "",
+                            "CblLng": "",
+                            "CblPN": "",
+                            "CblSN": "",
+                            "HCA_Type": "MT4121",
+                            "IbNetPref": "fe80000000000000",
+                            "IpStat": "up_ip46",
+                            "Link": "IB",
+                            "LnkCapWidth": "x16 G4",
+                            "LnkStaWidth": "x16",
+                            "LnkStat": "actv",
+                            "MST_device": "",
+                            "Net": "ib1",
+                            "Numa": "-1",
+                            "PCI_addr": "0000:10:00.1",
+                            "PGuid": "ec0d9a03002fb4d3",
+                            "PLid": "3",
+                            "Parent_addr": "-",
+                            "PhyAnalisys": "",
+                            "PhyLinkStat": "",
+                            "PhyLnkSpd": "",
+                            "Port": "1",
+                            "RDMA": "mlx5_1",
+                            "RX_bps": "N/A",
+                            "Rate": "100",
+                            "RoCEstat": "N/A",
+                            "SMGuid": "",
+                            "SRIOV": "PF  ",
+                            "SwDescription": "",
+                            "TX_bps": "N/A",
+                            "VrtHCA": "Phys"
+                        }
+                    ]
+                }
+            ]
+            """
+        try:
+            logging.debug('Tries to load output into json file')
+            j = json.loads(string)
+            j[0]['Server_name'] = 'r-smg-ib01'
+            with open('r-smg-ib01.json', 'w') as f:
+                json.dump(j, f)
+
+            #print(string)
+        except Exception as e:
+            logging.error('Exception : got exception in loading the json file ' + str(e))
+            print(e)
+
 
 
 
 def main():
     parser = argparse.ArgumentParser(description='This is tool generate report for all lab devices')
-    parser.add_argument('--device_list', dest='device_list', help='path to device list file', required=True)
+    parser.add_argument('--device_list',     dest='device_list', help='path to device list file', required=True)
     parser.add_argument('--email', dest='email', help='email list written in text file', required=True)
     parser.add_argument('--debug', dest='debug', action='store_true', help='change to debug mode')
 
@@ -819,13 +1130,24 @@ def main():
                         filemode='w')
 
     logging.info("lab report Script Start...")
+    tmp = HCAs()
+    #exit(0)
     email_list = parse_email_file(args.email)
     device_list_ip = parse_device_list(args.device_list)
     devices_obj = Create_devices_objects(device_list_ip)
     xls = XlsWriter(devices_obj,email_list)
+    #counting number of error in log
+    dir_ = os.getcwd()
+    file = "lab_report.log"
+    filename = dir_ + os.sep + file
+    f = open(filename, "r")
+    info = re.findall('ERROR', f.read())
 
+    if info:
+        print('\nScript has finished with :'+ str(len(info)) + ' errors')
+    else:
+        print('\nScript is ended with 0 errors')
 
-    b = 1
 
 
 if __name__ == '__main__':
