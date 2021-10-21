@@ -986,6 +986,10 @@ class XlsWriter():
                 logging.debug('File has found, removing it')
                 os.remove(path_to_target)
 
+            if not os.path.exists(Constants.root_report_lab):
+                os.makedirs(path_to_target, exist_ok=True)
+                os.chmod(path_to_target, 0o777)
+
             shutil.copy(name,path_to_target)
         except Exception as e:
             logging.error('Exception in save workbook ' + str(e))
