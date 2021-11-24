@@ -121,7 +121,7 @@ class Wapper():
             #identify from DHCP what type of device is it:
             logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
             cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device
-            out = dev.run_command(cmd,dev.shell)
+            out = dev.run_command(cmd)
             #if device has no next server it means that it was not found in DHCP
             if 'next-server' in out:
                 logging.debug("device exist in dhcp : " + device)

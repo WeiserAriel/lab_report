@@ -33,7 +33,7 @@ class Switch(Device):
         # shell Object is not ready so sleeping for 3 seconds.
         time.sleep(3)
         try:
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('get_version_json', out, Constants.root_switch)
         except Exception as e:
             logging.error("Exception in get_version_json : " + str(e))
@@ -45,7 +45,7 @@ class Switch(Device):
         # shell Object is not ready so sleeping for 3 seconds.
         time.sleep(3)
         try:
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('get_interface_ib_status', out,Constants.root_switch)
         except Exception as e:
             logging.error("Exception in get_interface_ib_status: " + str(e))
@@ -57,7 +57,7 @@ class Switch(Device):
         # shell Object is not ready so sleeping for 3 seconds.
         time.sleep(3)
         try:
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('show asic-version', out,Constants.root_switch)
         except Exception as e:
             logging.error("Exception in show asic-version | json-print " + str(e))
@@ -89,7 +89,7 @@ class Switch(Device):
         #shell Object is not ready so sleeping for 3 seconds.
         import time
         time.sleep(3)
-        out = super().run_command(cmd, self.shell)
+        out = super().run_command(cmd)
         regex = '(Version summary:\s*)(\S*\s*\S*)'
         if out:
             list = super().search_in_regex(out, regex)

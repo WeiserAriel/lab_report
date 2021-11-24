@@ -25,6 +25,24 @@ class Device:
         #start collecting device properties:
         self.get_all_device_properties()
         logging.debug("finish building device class for :" + device_name)
+
+
+    def set_enable_configure_terminal(self):
+        time.sleep(5)
+        logging.debug("running 'enable' and ' configure terminal'")
+        i = 0
+        commandsList = ['enable', 'configure terminal']
+        expectedList = ['#', '(config)']
+        for cmd, expect in zip(commandsList, expectedList):
+            out = self.run_command(cmd)
+            if expect in out:
+                logging.info(cmd + " command run successfully")
+            else:
+                logging.error("can't run " + cmd + " command")
+            i += 1
+            time.sleep(2)
+
+        logging.debug('returning shell after running enable and configure terminal')
     
     def get_all_device_properties(self):
         #checking ping to MGMT
@@ -125,7 +143,7 @@ class Device:
     def get_dmidecode(self):
         logging.debug("trying to find dmidecode for : " + self.device_name)
         cmd = 'dmidecode -s system-serial-number'
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         time.sleep(6)
         if 'not found' in out:
             return 'n/a'
@@ -138,7 +156,7 @@ class Device:
     def get_ofed_version(self):
         logging.debug("Find ofed version on : " + self.device_name)
         cmd = 'ofed_info -s'
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         regex = '(MLNX_OFED_LINUX-)(.*)'
         if out and 'command not found' not in out:
             ofed = self.search_in_regex(out, regex)
@@ -158,7 +176,7 @@ class Device:
     def find_total_memory(self):
         logging.debug("Find Total Memory on : " + self.device_name)
         cmd = 'cat /proc/meminfo | grep MemTotal'
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         regex = '(\s*)(\d*)(\s*)(kB)'
         if out:
             memory = self.search_in_regex(out,regex)
@@ -174,7 +192,7 @@ class Device:
     def get_ports(self):
         logging.debug("Running ibstat on : " + self.device_name)
         cmd = 'ibstat | grep \'CA type\''
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         totalPorts = 4
         i = 0
         ports = []
@@ -204,7 +222,7 @@ class Device:
         logging.debug("search for HW address to " + self.device_name)
         device_name = self.device_name
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | egrep -i ' + device_name
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         time.sleep(7)
         regex = '(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
         if out:
@@ -223,9 +241,9 @@ class Device:
     def get_device_ilo(self):
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + self.device_name + '-ilo'
         if self.linux_device is not None or self.ip_reply != 'Yes':
-            out = self.run_command(cmd,self.linux_device.shell)
+            out = self.run_command(cmd)
         else:
-            out = self.run_command(cmd, self.shell)
+            out = self.run_command(cmd)
             time.sleep(3)
         if out:
             rows = out.split('\n')
@@ -300,23 +318,29 @@ class Device:
         else:
             return None
 
+    def run_command(self, cmd):
 
-    @staticmethod
-    def run_command(cmd,shell):
+        if self.device_name == 'switch':
+            pass
+        elif self.device_name == 'linux_host':
+            try:
+                stdin, stdout, stderr = self.shell.exec_command(cmd)
+                if stderr.read():
+                    logging.critical('stderr is not emply ')
+                else:
+                    return stdout.read().decode('utf-8')
+            except Exception as e:
+                logging.error('Excpetion in run command for Linux host : ' + str(e))
+
+
+        elif self.device_name == 'UFMAPL':
+            pass
         '''
-
-          :param shell:
-          :param cmd: cmd command like ' show version'
-          :param expect: string to look for like '
-          :return: 0 if the expected string was found in output.
-          '''
-        # sleeping for 3 seconds to the command will be executed after shell prompt is printed.
-
-        shell.send(cmd + '\n')
+        self.shell.send(cmd + '\n')
         out = ''
         while True:
             try:
-                tmp = shell.recv(1024)
+                tmp = self.shell.recv(1024)
                 if not tmp:
                     break
             except Exception as e:
@@ -325,7 +349,7 @@ class Device:
         ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
         out = ansi_escape.sub('', out)
         return out
-
+    '''
     @staticmethod
     def search_in_regex(output, regex):
         prog = re.compile(regex)

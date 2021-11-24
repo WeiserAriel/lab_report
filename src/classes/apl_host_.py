@@ -40,7 +40,7 @@ class Apl_Host(Device):
     def change_to_cli(self):
         logging.debug("Changing to cli mode in : " + self.device_name )
         cmd = 'cli'
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
 
 
     def get_all_values(self):
@@ -54,7 +54,7 @@ class Apl_Host(Device):
     def get_os_version(self):
         cmd = 'show version'
         regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
-        out = super().run_command(cmd, self.shell)
+        out = super().run_command(cmd)
         if out:
             list = super().search_in_regex(out, regex)
             self.os_version = list[0][4]
@@ -84,27 +84,8 @@ class Apl_Host(Device):
     def get_ilo_ip(self):
         self.ilo_ip = super().get_device_ilo()
 
-    @staticmethod
-    def set_enable_configure_terminal(shell):
-        time.sleep(5)
-        logging.debug("running 'enable' and ' configure terminal'")
-        i = 0
-        commandsList = ['enable', 'configure terminal']
-        expectedList = ['#', '(config)']
-        for cmd, expect in zip(commandsList, expectedList):
-            out = Device.run_command(cmd=cmd, shell=shell)
-            if expect in out:
-                logging.info(cmd + " command run successfully")
-            else:
-                logging.error("can't run " + cmd + " command")
-            i += 1
-            time.sleep(2)
-
-        logging.debug('returning shell after running enable and configure terminal')
-        return shell
 
     def initial_apl_shell(self):
-
         self.shell = self.set_enable_configure_terminal()
         self.get_hw_address()
         has_shell = self.confiure_appliance_license()
@@ -116,7 +97,7 @@ class Apl_Host(Device):
         logging.debug("start to confiure license to " + self.device_name)
         mac = self.hw_address
         cmd = '/builds/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac 
-        license = self.run_command(cmd,self.linux_device.shell)
+        license = self.run_command(cmd)
 
         
         rows = license.splitlines()
@@ -128,14 +109,14 @@ class Apl_Host(Device):
             logging.error("couldn't get restricted license for : " +self.device_name)
 
         cmd = 'fae license install ' + license
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         has_shell = self.change_to_shell()
         return has_shell
 
     def change_to_shell(self):
         logging.debug("Change to shell mode in : " + self.device_name)
         cmd = '_shell'
-        out = self.run_command(cmd, self.shell)
+        out = self.run_command(cmd)
         time.sleep(3)
         if 'admin' in out:
             logging.debug("change to shell mode successfully in : " + self.device_name)
@@ -152,7 +133,7 @@ class Apl_Host(Device):
         for interface in interfaces:
             cmd = 'show interfaces ' +interface +' brief'
             regex = '(HW address:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
-            out = self.run_command(cmd, shell=self.shell)
+            out = self.run_command(cmd)
             time.sleep(6)
             if not 'Unrecognized' in out:
                 break

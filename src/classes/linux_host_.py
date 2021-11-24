@@ -42,7 +42,7 @@ class Linux_Host(Device):
         logging.info('Starting Get Model function for device : ' + str(self.device_name))
         try:
             cmd = r'''dmidecode | grep -A3 '^System Information' | grep Product | cut -d ':' -f 2'''
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('product_model', out, Constants.root_servers)
 
         except Exception as e:
@@ -52,7 +52,7 @@ class Linux_Host(Device):
         logging.info('Starting Get Manufacture function for device : ' + str(self.device_name))
         try:
             cmd = r'''dmidecode | grep -A3 '^System Information' | grep Manufacture | cut -d ':' -f 2'''
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('manufacture', out, Constants.root_servers)
 
         except Exception as e:
@@ -66,7 +66,7 @@ class Linux_Host(Device):
         logging.info('Starting lshca function for device : ' + str(self.device_name))
         try:
             cmd = '/hpc/local/bin/lshca -m normal -j -w roce'
-            out = super().run_command(cmd, self.shell)
+            out = super().run_command(cmd)
             super().dump_file('lshca', out, Constants.root_hcas)
 
         except Exception as e:
@@ -83,7 +83,7 @@ class Linux_Host(Device):
     def get_os_version(self):
         logging.debug("trying to get os version for : " + self.device_name)
         cmd = 'cat /etc/*-re*'
-        out = super().run_command(cmd , self.shell)
+        out = super().run_command(cmd)
         if out:
             rows = out.splitlines()
             for row in rows:
