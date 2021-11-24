@@ -263,11 +263,12 @@ class Device:
         if self.ping_device(ip) == True:
             try:
                 logging.debug("try to connect via SSH to :" + self.device_name)
-                ssh = self.SSHConnect(ip, username, password)
+                ssh_client = self.SSHConnect(ip, username, password)
             except Exception as e:
                 logging.debug("SSH failed which means no ping to host : " + self.device_name)
                 self.ip_reply = 'No'
-            self.shell = self.createshell(ssh)
+            #self.shell = self.createshell(client)
+            self.ssh_client = ssh_client
             logging.debug("end init_ssh")
         else:
             logging.debug("skip ssh to : " + self.device_name + " because no ping to MGMT")
@@ -288,23 +289,23 @@ class Device:
 
 
     def SSHConnect(self, ip, username, passowrd):
-        ssh = paramiko.SSHClient()
+        client = paramiko.SSHClient()
         logging.debug(msg="Open SSH Client to :" + str(ip))
         try:
-            ssh.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
-            ssh.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
+            client.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
+            client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
         except Exception as ex:
             logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
 
         logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
-        return ssh
+        return client
 
     @staticmethod
-    def createshell(ssh):
+    def createshell(client):
         shell =None
         for i in range(3):
             try:
-                shell = ssh.invoke_shell()
+                shell = clinet.invoke_shell()
                 shell.settimeout(10)
                 shell.recv(1024)
                 # time.sleep(10)
@@ -320,11 +321,11 @@ class Device:
 
     def run_command(self, cmd):
 
-        if self.device_name == 'switch':
+        if self.device_type == 'switch':
             pass
-        elif self.device_name == 'linux_host':
+        elif self.device_type == 'linux_host':
             try:
-                stdin, stdout, stderr = self.shell.exec_command(cmd)
+                stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                 if stderr.read():
                     logging.critical('stderr is not emply ')
                 else:
@@ -333,7 +334,7 @@ class Device:
                 logging.error('Excpetion in run command for Linux host : ' + str(e))
 
 
-        elif self.device_name == 'UFMAPL':
+        elif self.device_type == 'UFMAPL':
             pass
         '''
         self.shell.send(cmd + '\n')

@@ -73,7 +73,7 @@ class Switch(Device):
     def get_all_properties(self):
         logging.debug("Getting all properties for switch : " + self.device_name)
         if self.shell:
-            self.shell = Apl_Host.set_enable_configure_terminal(self.shell)
+            self.set_enable_configure_terminal(self.shell)
             self.get_os_version()
             self.get_switch_info()
 

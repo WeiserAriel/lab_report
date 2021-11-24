@@ -86,7 +86,7 @@ class Apl_Host(Device):
 
 
     def initial_apl_shell(self):
-        self.shell = self.set_enable_configure_terminal()
+        self.set_enable_configure_terminal()
         self.get_hw_address()
         has_shell = self.confiure_appliance_license()
         return has_shell

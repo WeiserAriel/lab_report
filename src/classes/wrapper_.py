@@ -112,7 +112,7 @@ class Wapper():
     def Create_devices_objects(device_list_ip):
         #Create tempory SSH connection to be able to create device list:
         logging.debug("connecting to r-ufm34 to create device list")
-        dev = Device('10.209.36.92','r-ufm34','Linux' ,'root', '3tango',None,'Nobody')
+        dev = Device('10.209.36.92','r-ufm34','linux_host' ,'root', '3tango',None,'Nobody')
         device_list = []
 
         for device in device_list_ip.keys():
