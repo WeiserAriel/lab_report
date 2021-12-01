@@ -26,14 +26,16 @@ class Apl_Host(Device):
     def get_all_properties(self, has_shell):
         self.get_ilo_ip()
         self.check_ilo_works()
-        if self.shell and has_shell:
+        if self.ssh_client and has_shell:
             #Commands after '_shell':
             self.get_ports()
             self.get_memory()
             self.get_ofed()
             self.get_dmidecode()
+
             # Some of the commands need to run after 'cli':
             self.change_to_cli()
+            self.set_enable_configure_terminal()
             self.get_os_version()
             self.get_hw_address()
 
@@ -52,6 +54,7 @@ class Apl_Host(Device):
         self.dmidecode = super().get_dmidecode()
         
     def get_os_version(self):
+        logging.debug('running get os version for : ' + str(self.device_name))
         cmd = 'show version'
         regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
         out = super().run_command(cmd)
@@ -126,22 +129,28 @@ class Apl_Host(Device):
 
 
     def get_hw_address(self):
-        #No need to call again configure terminal
-        #self.set_enable_configure_terminal()
-        interfaces = ['eth0','mgmt0']
-        for interface in interfaces:
-            cmd = 'show interfaces ' +interface +' brief'
-            regex = '(HW address:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
-            out = self.run_command(cmd)
-            if not 'Unrecognized' in out:
-                break
-        else:
-            logging.error("Couldn't find HW address for : " + self.device_name)
-            self.hw_address = 'n/a'
+        try:
+            if '(config)' not in self.ssh_client.find_prompt():
+                logging.debug('Running configure terminal')
+                self.confiure_appliance_license()
+                logging.debug('Running configure terminal is done')
 
-        hw_list = Device.search_in_regex(out, regex)
-        if hw_list:
-            self.hw_address = hw_list[0][1]
-        else:
-            logging.fatal("Couldn't find HW address in regex to : " + self.device_name)
-            self.hw_address = 'n/a'
+            interfaces = ['eth0','mgmt0']
+            for interface in interfaces:
+                cmd = 'show interfaces ' +interface +' brief'
+                regex = '(HW address:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
+                out = self.run_command(cmd)
+                if not 'Unrecognized' in out:
+                    break
+            else:
+                logging.error("Couldn't find HW address for : " + self.device_name)
+                self.hw_address = 'n/a'
+
+            hw_list = Device.search_in_regex(out, regex)
+            if hw_list:
+                self.hw_address = hw_list[0][1]
+            else:
+                logging.fatal("Couldn't find HW address in regex to : " + self.device_name)
+                self.hw_address = 'n/a'
+        except Exception as e:
+            logging.error('Exception in get_hw_address ' + str(e))

@@ -22,7 +22,6 @@ class Device:
         self.device_name = device_name
         self.device_type = device_type
         self.hw_address = 'n/a'
-        self.shell = None
         self.init_ssh(username,password)
         self.hw_address = 'n/a'
         #start collecting device properties:
@@ -55,7 +54,7 @@ class Device:
     
     def get_all_device_properties(self):
         #checking ping to MGMT
-        if self.shell:
+        if self.ssh_client:
             if self.ping_device(self.ip):
                 self.ip_reply = 'Yes'
             else:
@@ -91,17 +90,14 @@ class Device:
                 logging.debug('dump json to file: ')
                 #WA
                 if function == 'manufacture' or function == 'product_model':
-                    value = None
                     try:
-                        value = re.findall('\r\n(.*)\r\n', data)
-                        if value:
-                            dic_ = dict()
-                            dic_[function] = value[0]
-                            dic_['Device_Name'] = str(self.device_name)
-                            with open(filename, 'w') as outfile:
-                                json.dump(dic_, outfile)
-                            logging.info('wrote ' + str(function) + ' of device : ' + str(self.device_name))
-                            return
+                        dic_ = dict()
+                        dic_[function] = data
+                        dic_['Device_Name'] = str(self.device_name)
+                        with open(filename, 'w') as outfile:
+                            json.dump(dic_, outfile)
+                        logging.info('wrote ' + str(function) + ' of device : ' + str(self.device_name))
+                        return
                             #exit from function
                     except Exception as e:
                             logging.error('could not find manufacture or model for ' + str(self.device_name) + ' ' + str(e))
@@ -153,11 +149,13 @@ class Device:
         logging.debug("trying to find dmidecode for : " + self.device_name)
         cmd = 'dmidecode -s system-serial-number'
         out = self.run_command(cmd)
-        time.sleep(6)
         if 'not found' in out:
             return 'n/a'
         elif out:
-            return out.splitlines()[1]
+            if type(out) == str:
+                return out
+            else:
+                return out.splitlines()[1]
         else:
             logging.fatal("couldn't find dmidecode for : " + self.device_name)
             return 'n/a'
@@ -211,14 +209,12 @@ class Device:
             #count number of ports:
             for row in list_rows:
                 if 'CA type' in row:
-                    if row == list_rows[0]:
-                        continue
                     ports.append(row.split(':')[1])
                     i += 1
             for _ in range(totalPorts - i):
                 ports.append('n/a')
 
-            logging.debug("found " +str(i) + "ports on " + self.device_name)
+            logging.debug("found " +str(i) + " ports on " + self.device_name)
             return ports
         else:
             logging.critical("No HCA-s install on : " + self.device_name)
@@ -232,7 +228,6 @@ class Device:
         device_name = self.device_name
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | egrep -i ' + device_name
         out = self.run_command(cmd)
-        time.sleep(7)
         regex = '(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
         if out:
             rows = out.split('\n')
@@ -250,10 +245,9 @@ class Device:
     def get_device_ilo(self):
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + self.device_name + '-ilo'
         if self.linux_device is not None or self.ip_reply != 'Yes':
-            out = self.run_command(cmd)
+            out = self.run_command(cmd,run_on_global='Yes')
         else:
-            out = self.run_command(cmd)
-            time.sleep(3)
+            out = self.run_command(cmd, run_on_global='Yes')
         if out:
             rows = out.split('\n')
             for row in rows:
@@ -276,7 +270,6 @@ class Device:
             except Exception as e:
                 logging.debug("SSH failed which means no ping to host : " + self.device_name)
                 self.ip_reply = 'No'
-            #self.shell = self.createshell(client)
             self.ssh_client = ssh_client
             logging.debug("end init_ssh")
         else:
@@ -286,7 +279,7 @@ class Device:
 
     def ping_device(self, host):
 
-        logging.debug("Sending ping to " + str(host))
+        logging.debug("'Sending ping to " + str(host))
         # Option for the number of packets as a function of
         param = '-n' if platform.system().lower() == 'windows' else '-c'
 

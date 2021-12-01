@@ -31,7 +31,6 @@ class Switch(Device):
         logging.debug("Getting get_version_json for switch : " + self.device_name)
         cmd = 'show version | json-print'
         # shell Object is not ready so sleeping for 3 seconds.
-        time.sleep(3)
         try:
             out = super().run_command(cmd)
             super().dump_file('get_version_json', out, Constants.root_switch)
@@ -43,7 +42,6 @@ class Switch(Device):
         logging.debug("Sending get_interface_ib_status for switch : " + self.device_name)
         cmd = "show interfaces ib status | json-print"
         # shell Object is not ready so sleeping for 3 seconds.
-        time.sleep(3)
         try:
             out = super().run_command(cmd)
             super().dump_file('get_interface_ib_status', out,Constants.root_switch)
@@ -55,7 +53,6 @@ class Switch(Device):
         logging.debug("Sending get_asic_version for switch : " + self.device_name)
         cmd = 'show asic-version | json-print'
         # shell Object is not ready so sleeping for 3 seconds.
-        time.sleep(3)
         try:
             out = super().run_command(cmd)
             super().dump_file('show asic-version', out,Constants.root_switch)
@@ -72,8 +69,8 @@ class Switch(Device):
 
     def get_all_properties(self):
         logging.debug("Getting all properties for switch : " + self.device_name)
-        if self.shell:
-            self.set_enable_configure_terminal(self.shell)
+        if self.ssh_client:
+            self.set_enable_configure_terminal()
             self.get_os_version()
             self.get_switch_info()
 
@@ -87,8 +84,6 @@ class Switch(Device):
     def get_os_version(self):
         cmd = 'show version'
         #shell Object is not ready so sleeping for 3 seconds.
-        import time
-        time.sleep(3)
         out = super().run_command(cmd)
         regex = '(Version summary:\s*)(\S*\s*\S*)'
         if out:

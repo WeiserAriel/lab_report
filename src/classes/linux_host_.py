@@ -20,7 +20,7 @@ class Linux_Host(Device):
         #start collecting information
         self.get_ilo_ip()
         self.check_ilo_works()
-        if self.shell:
+        if self.ssh_client:
             self.get_all_properties()
         logging.debug("finish building linux host class for " + device_name)
 
@@ -28,7 +28,7 @@ class Linux_Host(Device):
     def get_all_properties(self):
 
         #if we don't have shell to host we can skip the function below:
-        if self.shell:
+        if self.ssh_client:
             self.get_hw_address()
             self.get_ports()
             self.get_memory()
