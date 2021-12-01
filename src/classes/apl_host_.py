@@ -16,7 +16,7 @@ class Apl_Host(Device):
         self.os_version = 'n/a'
         self.dmidecode = 'n/a'
         #if self.ip_reply != 'n/a':
-        if self.shell:
+        if self.ssh_client:
             has_shell = self.initial_apl_shell()
         # start collecting information
             self.get_all_properties(has_shell)
@@ -97,7 +97,7 @@ class Apl_Host(Device):
         logging.debug("start to confiure license to " + self.device_name)
         mac = self.hw_address
         cmd = '/builds/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac 
-        license = self.run_command(cmd)
+        license = self.run_command(cmd,run_on_global='Yes')
 
         
         rows = license.splitlines()
@@ -117,7 +117,6 @@ class Apl_Host(Device):
         logging.debug("Change to shell mode in : " + self.device_name)
         cmd = '_shell'
         out = self.run_command(cmd)
-        time.sleep(3)
         if 'admin' in out:
             logging.debug("change to shell mode successfully in : " + self.device_name)
             return True
@@ -134,7 +133,6 @@ class Apl_Host(Device):
             cmd = 'show interfaces ' +interface +' brief'
             regex = '(HW address:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
             out = self.run_command(cmd)
-            time.sleep(6)
             if not 'Unrecognized' in out:
                 break
         else:

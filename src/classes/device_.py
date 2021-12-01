@@ -8,9 +8,12 @@ import time
 import platform
 import subprocess
 import paramiko
+from netmiko import ConnectHandler
 
 
 class Device:
+    global_deivce_obj= None
+    counter = 0
     def __init__(self, device_ip, device_name, device_type, username, password, linux_device, owner):
         self.owner = owner
         self.linux_device = linux_device
@@ -24,25 +27,31 @@ class Device:
         self.hw_address = 'n/a'
         #start collecting device properties:
         self.get_all_device_properties()
+        self.save_global_obj()
         logging.debug("finish building device class for :" + device_name)
+
+    def save_global_obj(self):
+        try:
+            if Device.counter == 0:
+                Device.global_deivce_obj = self
+
+            Device.counter = Device.counter +1
+        except Exception as e:
+            logging.error('Exception in save global object ' + str(e))
 
 
     def set_enable_configure_terminal(self):
-        time.sleep(5)
-        logging.debug("running 'enable' and ' configure terminal'")
-        i = 0
-        commandsList = ['enable', 'configure terminal']
-        expectedList = ['#', '(config)']
-        for cmd, expect in zip(commandsList, expectedList):
-            out = self.run_command(cmd)
-            if expect in out:
-                logging.info(cmd + " command run successfully")
+        try:
+            logging.debug("running 'enable' and ' configure terminal'")
+            self.ssh_client.send_command_timing('enable')
+            self.ssh_client.send_command_timing('configure terminal')
+            if '(config)' in self.ssh_client.find_prompt():
+                logging.debug('configure terminal command successded')
             else:
-                logging.error("can't run " + cmd + " command")
-            i += 1
-            time.sleep(2)
+                pass
+        except Exception as e:
+            logging.error('Exception received in set configuration terminal : ' + str(e))
 
-        logging.debug('returning shell after running enable and configure terminal')
     
     def get_all_device_properties(self):
         #checking ping to MGMT
@@ -289,16 +298,30 @@ class Device:
 
 
     def SSHConnect(self, ip, username, passowrd):
-        client = paramiko.SSHClient()
-        logging.debug(msg="Open SSH Client to :" + str(ip))
-        try:
-            client.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
-            client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
-        except Exception as ex:
-            logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
+        #Checking which type of connection needed ( Switch / UFMAPL / Linux Host
+        if self.device_type == 'linux_host':
+            client = paramiko.SSHClient()
+            logging.debug(msg="Open SSH Client to to linux host :" + str(ip))
+            try:
+                logging.getLogger("paramiko").setLevel(logging.WARNING)
+                client.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
+                client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
+            except Exception as ex:
+                logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
 
-        logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
-        return client
+            logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
+            return client
+        else:
+            #UFMAPL / Switch
+            logging.debug(msg="Open SSH Client to to switch/ufmapl :" + str(ip))
+            try:
+                client = ConnectHandler(device_type='cisco_ios', host=ip, username=username,password=passowrd)
+                logging.getLogger("netmiko").setLevel(logging.WARNING)
+            except Exception as ex:
+                logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
+            logging.debug("SSH Client to to switch/ufmapl :" + str(ip) + ' Established')
+
+            return client
 
     @staticmethod
     def createshell(client):
@@ -319,13 +342,33 @@ class Device:
         else:
             return None
 
-    def run_command(self, cmd):
-
-        if self.device_type == 'switch':
-            pass
-        elif self.device_type == 'linux_host':
+    def run_command(self, cmd, remove_asci='no', run_on_global=None):
+        if (self.device_type == 'switch' or self.device_type == 'ufmapl' or 'GEN' in self.device_type ) and run_on_global == None:
             try:
-                stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
+                logging.debug('Running command for switch or ufmapl :' + str(cmd))
+                output = self.ssh_client.send_command_timing(cmd)
+                if remove_asci == 'no':
+                    return output
+                else:
+                    #removing asci
+                    try:
+                        logging.debug('Removing ASCI characters from output ')
+                        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                        result = ansi_escape.sub('', output)
+                        logging.debug('Removing ASCI characters from output succussded ')
+                        return result
+                    except Exception as e:
+                        logging.error('Exception in removing asci charecters for output of command ' + str(e))
+                        return None
+            except Exception as e:
+                logging.error('Exception in running command ' + str(e))
+
+        elif self.device_type == 'linux_host' or run_on_global != None:
+            try:
+                if run_on_global:
+                    stdin, stdout, stderr = Device.global_deivce_obj.ssh_client.exec_command(cmd)
+                else:
+                    stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                 if stderr.read():
                     logging.critical('stderr is not emply ')
                 else:
@@ -333,24 +376,6 @@ class Device:
             except Exception as e:
                 logging.error('Excpetion in run command for Linux host : ' + str(e))
 
-
-        elif self.device_type == 'UFMAPL':
-            pass
-        '''
-        self.shell.send(cmd + '\n')
-        out = ''
-        while True:
-            try:
-                tmp = self.shell.recv(1024)
-                if not tmp:
-                    break
-            except Exception as e:
-                break
-            out += tmp.decode("utf-8")
-        ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
-        out = ansi_escape.sub('', out)
-        return out
-    '''
     @staticmethod
     def search_in_regex(output, regex):
         prog = re.compile(regex)

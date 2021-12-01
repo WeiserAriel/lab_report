@@ -109,7 +109,9 @@ class XlsWriter():
         server.starttls()
         server.login(email_user, email_password)
         if full_path:
-            server.sendmail(email_user, recepients, text)
+            #TODO - skip email sending
+            pass
+            #server.sendmail(email_user, recepients, text)
         server.quit()
         logging.info("Email sending is done")
 
@@ -119,7 +121,10 @@ class XlsWriter():
             path_to_target = Constants.root_report_lab + os.sep + name
             if os.path.exists(path_to_target):
                 logging.debug('File has found, removing it')
-                os.remove(path_to_target)
+                if os.path.isdir(path_to_target):
+                    shutil.rmtree(path_to_target)
+                else:
+                    os.remove(path_to_target)
 
             if not os.path.exists(Constants.root_report_lab):
                 os.makedirs(path_to_target, exist_ok=True)
