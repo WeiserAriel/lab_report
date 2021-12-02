@@ -65,9 +65,18 @@ class Linux_Host(Device):
     def lshca(self):
         logging.info('Starting lshca function for device : ' + str(self.device_name))
         try:
+            tools = ['python','/hpc/local/bin/lshca']
+            flag = True
             cmd = '/hpc/local/bin/lshca -m normal -j -w roce'
-            out = super().run_command(cmd)
-            super().dump_file('lshca', out, Constants.root_hcas)
+            for tool in tools:
+                if not self.is_tool_installed(tool):
+                    flag = False
+                    break
+            if not flag:
+                logging.debug('tool does not install on : ' +self.device_name)
+            else:
+                out = super().run_command(cmd)
+                super().dump_file('lshca', out, Constants.root_hcas)
 
         except Exception as e:
             logging.error('Exception in lshca function : ' + str(e))

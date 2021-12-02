@@ -12,7 +12,7 @@ from netmiko import ConnectHandler
 
 
 class Device:
-    global_deivce_obj= None
+    global_deivce_obj = None
     counter = 0
     def __init__(self, device_ip, device_name, device_type, username, password, linux_device, owner):
         self.owner = owner
@@ -22,6 +22,7 @@ class Device:
         self.device_name = device_name
         self.device_type = device_type
         self.hw_address = 'n/a'
+        self.ssh_client = None
         self.init_ssh(username,password)
         self.hw_address = 'n/a'
         #start collecting device properties:
@@ -148,37 +149,45 @@ class Device:
     def get_dmidecode(self):
         logging.debug("trying to find dmidecode for : " + self.device_name)
         cmd = 'dmidecode -s system-serial-number'
-        out = self.run_command(cmd)
-        if 'not found' in out:
+        if not self.is_tool_installed(cmd):
+            logging.debug('dmidecode does not installed on : ' + self.device_name)
             return 'n/a'
-        elif out:
-            if type(out) == str:
-                return out
-            else:
-                return out.splitlines()[1]
         else:
-            logging.fatal("couldn't find dmidecode for : " + self.device_name)
-            return 'n/a'
+            out = self.run_command(cmd)
+            if 'not found' in out:
+                return 'n/a'
+            elif out:
+                if type(out) == str:
+                    return out
+                else:
+                    return out.splitlines()[1]
+            else:
+                logging.fatal("couldn't find dmidecode for : " + self.device_name)
+                return 'n/a'
         
     def get_ofed_version(self):
         logging.debug("Find ofed version on : " + self.device_name)
         cmd = 'ofed_info -s'
-        out = self.run_command(cmd)
-        regex = '(MLNX_OFED_LINUX-)(.*)'
-        if out and 'command not found' not in out:
-            ofed = self.search_in_regex(out, regex)
-            if ofed:
-                return str(ofed[0][1]).replace('\r','').replace(' ','')
-            else:
-                return 'n/a'
+        if not self.is_tool_installed(cmd):
+            logging.debug('ofed does not exist on device : ' + self.device_name)
+            return 'n/a'
         else:
-            if 'command not found' in out:
-                logging.debug("OFED is not installed on :" + self.device_name)
-                ofed = 'Not Installed'
+            out = self.run_command(cmd)
+            regex = '(MLNX_OFED_LINUX-)(.*)'
+            if out and 'command not found' not in out:
+                ofed = self.search_in_regex(out, regex)
+                if ofed:
+                    return str(ofed[0][1]).replace('\r','').replace(' ','')
+                else:
+                    return 'n/a'
             else:
-                logging.critical("couldn't find ofed version on " + self.device_name)
-                ofed = 'n/a'
-        return ofed
+                if 'command not found' in out:
+                    logging.debug("OFED is not installed on :" + self.device_name)
+                    ofed = 'Not Installed'
+                else:
+                    logging.critical("couldn't find ofed version on " + self.device_name)
+                    ofed = 'n/a'
+            return ofed
 
     def find_total_memory(self):
         logging.debug("Find Total Memory on : " + self.device_name)
@@ -196,8 +205,27 @@ class Device:
             memory = 'n/a'
             return memory
 
+    def is_tool_installed(self, tool_name):
+        logging.debug('Checking if the tool name exist on : ' + self.device_name + ' tool name : ' + str(tool_name))
+        try:
+            cmd = 'which ' + tool_name
+            out = self.run_command(cmd)
+            if 'no' in out or 'Not' in out or out == "":
+                logging.debug('tool ' + tool_name + ' is not exist on ' + self.device_name)
+                return False
+            else:
+                logging.debug('tool ' + tool_name + ' exist on ' + self.device_name)
+                return True
+        except Exception as e:
+            logging.error('Exception on is tool installed : ' + str(e))
+
+
     def get_ports(self):
         logging.debug("Running ibstat on : " + self.device_name)
+        if not self.is_tool_installed('ibstat'):
+            ports = ['n/a', 'n/a', 'n/a', 'n/a']
+            return ports
+
         cmd = 'ibstat | grep \'CA type\''
         out = self.run_command(cmd)
         totalPorts = 4
@@ -227,7 +255,7 @@ class Device:
         logging.debug("search for HW address to " + self.device_name)
         device_name = self.device_name
         cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | egrep -i ' + device_name
-        out = self.run_command(cmd)
+        out = self.run_command(cmd, run_on_global='Yes')
         regex = '(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
         if out:
             rows = out.split('\n')
@@ -301,6 +329,7 @@ class Device:
                 client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
             except Exception as ex:
                 logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
+                return None
 
             logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
             return client
@@ -363,7 +392,8 @@ class Device:
                 else:
                     stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                 if stderr.read():
-                    logging.critical('stderr is not emply ')
+                    logging.critical('stderr is not empty for last command ' + str(cmd))
+                    return stdout.read().decode('utf-8')
                 else:
                     return stdout.read().decode('utf-8')
             except Exception as e:
