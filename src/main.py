@@ -4,7 +4,7 @@
 
 # from classes import Apl_
 
-from src.classes.hca_ import HCAs
+from classes.hca_ import HCAs
 
 from classes.wrapper_ import Wapper
 from classes.xlswriter_ import XlsWriter
