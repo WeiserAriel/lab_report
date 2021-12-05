@@ -5,6 +5,7 @@ from .device_ import Device
 
 from .linux_host_ import Linux_Host
 from .switch_ import Switch
+from .constant_ import Constants
 
 import logging
 
@@ -131,8 +132,8 @@ class Wapper():
                     regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
                     found = Device.search_in_regex(row, regex)
                     if found and (row.split('; ')[2] == device):
-                        device_name = row.split(';')[2]
-                        device_ip = row.split(';')[0]
+                        device_name = str(row.split(';')[2]).replace(" ","")
+                        device_ip = str(row.split(';')[0]).replace(" ","")
                         break
                 else:
                     logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
@@ -140,8 +141,9 @@ class Wapper():
                     logging.debug("regex : " + regex)
                     logging.debug("Continue to the next device... ")
                     continue
-            
-                if 'apl' in row:
+                if device_name in Constants.ignore_devices:
+                    continue
+                elif 'apl' in row:
                     #check if this is gen2 or gen1
                     logging.debug("device identiry as appliance : " + device_name)
                     if 'gen1' in row:

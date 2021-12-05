@@ -341,6 +341,7 @@ class Device:
                 logging.getLogger("netmiko").setLevel(logging.WARNING)
             except Exception as ex:
                 logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
+                return None
             logging.debug("SSH Client to to switch/ufmapl :" + str(ip) + ' Established')
 
             return client
