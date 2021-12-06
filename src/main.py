@@ -73,7 +73,7 @@ def main():
     #counting number of error in log
     dir_ = os.getcwd()
     file = "lab_report.log"
-    filename = dir_ + os.sep + file
+    filename = log_file
     f = open(filename, "r")
     info = re.findall('ERROR', f.read())
 
