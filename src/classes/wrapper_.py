@@ -148,7 +148,7 @@ class Wapper():
                     logging.debug("device identiry as appliance : " + device_name)
                     if 'gen1' in row:
                         tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner)
-                    elif 'gen2.5' in row:
+                    elif 'gen25' in row:
                         tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner)
                     elif 'gen2' in row:
                         tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner)

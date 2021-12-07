@@ -138,7 +138,7 @@ class Apl_Host(Device):
             interfaces = ['eth0','mgmt0']
             for interface in interfaces:
                 cmd = 'show interfaces ' +interface +' brief'
-                regex = '(HW address:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
+                regex = '(HW address.*:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
                 out = self.run_command(cmd)
                 if not 'Unrecognized' in out:
                     break
