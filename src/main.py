@@ -22,6 +22,7 @@ with warnings.catch_warnings():
 import os
 import sys
 import re
+import datetime
 import platform    # For getting the operating system name
 import subprocess  # For executing a shell command
 import time
@@ -64,8 +65,8 @@ def main():
                         filemode='w')
 
     logging.info("lab report Script Start...")
+    begin_time = datetime.datetime.now()
     tmp = HCAs()
-    #exit(0)
     email_list = Wapper.parse_email_file(args.email)
     device_list_ip = Wapper.parse_device_list(args.device_list)
     devices_obj = Wapper.Create_devices_objects(device_list_ip)
@@ -76,6 +77,7 @@ def main():
     filename = log_file
     f = open(filename, "r")
     info = re.findall('ERROR', f.read())
+    print('Script finished after : '+  str(datetime.datetime.now() - begin_time))
 
     if info:
         print('\nScript has finished with :'+ str(len(info)) + ' errors')
