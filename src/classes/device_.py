@@ -128,7 +128,7 @@ class Device:
                 logging.error('Exception in dumping json to device : '+ str(self.device_name) + ' ' + str(e))
 
         except Exception as e:
-            logging.error('Exception recieive in dump file for :' + self.device_name)
+            logging.error('Exception recieive in dump file for :' + self.device_name  + ' ' + str(e) )
 
     def remove_hostname(self,final_string, device_name ):
         logging.debug('Checking if the hostname returned in the output')
