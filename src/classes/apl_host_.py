@@ -131,16 +131,18 @@ class Apl_Host(Device):
     def get_hw_address(self):
         try:
             if '(config)' not in self.ssh_client.find_prompt():
-                logging.debug('Running configure terminal')
+                logging.debug('Running configure terminal for ' + self.device_name)
                 self.confiure_appliance_license()
-                logging.debug('Running configure terminal is done')
+                logging.debug('Running configure terminal is done : ' +self.device_name)
 
             interfaces = ['eth0','mgmt0']
             for interface in interfaces:
                 cmd = 'show interfaces ' +interface +' brief'
+                logging.debug('running command on : ' + self.device_name + ' cmd = ' + cmd )
                 regex = '(HW address.*:)\s*(.{2}:.{2}:.{2}:.{2}:.{2}:.{2})'
                 out = self.run_command(cmd)
                 if not 'Unrecognized' in out:
+                    logging.debug('succussed')
                     break
             else:
                 logging.error("Couldn't find HW address for : " + self.device_name)

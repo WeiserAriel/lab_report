@@ -322,7 +322,7 @@ class Device:
         #Checking which type of connection needed ( Switch / UFMAPL / Linux Host
         if self.device_type == 'linux_host':
             client = paramiko.SSHClient()
-            logging.debug(msg="Open SSH Client to to linux host :" + str(ip))
+            logging.debug(msg="Open SSH Client to to linux host :" + str(ip) +"(" + self.device_name + ')' )
             try:
                 logging.getLogger("paramiko").setLevel(logging.WARNING)
                 client.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
@@ -331,7 +331,7 @@ class Device:
                 logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
                 return None
 
-            logging.info(msg="Open SSH Client to :" + str(ip) + " established!")
+            logging.info(msg="Open SSH Client to :" + str(ip) +"(" + self.device_name + ')' + " established!")
             return client
         else:
             #UFMAPL / Switch
