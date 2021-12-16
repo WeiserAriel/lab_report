@@ -38,6 +38,17 @@ class Switch(Device):
             logging.error("Exception in get_version_json : " + str(e))
         logging.info('Done with get_verion ')
 
+    def get_inventory_json(self):
+        logging.debug("Getting get_inventory_json for switch : " + self.device_name)
+        cmd = 'show inventory | json-print'
+        # shell Object is not ready so sleeping for 3 seconds.
+        try:
+            out = super().run_command(cmd, remove_asci='Yes')
+            super().dump_file('get_inventory_json', out, Constants.root_switch)
+        except Exception as e:
+            logging.error("Exception in get_inventory_json : " + str(e))
+        logging.info('Done with get_inventory ')
+
     def get_interface_ib_status(self):
         logging.debug("Sending get_interface_ib_status for switch : " + self.device_name)
         cmd = "show interfaces ib status | json-print"
@@ -62,6 +73,7 @@ class Switch(Device):
 
     def get_switch_info(self):
         self.get_version_json()
+        self.get_inventory_json()
         #self.get_interface_ib_status()
         self.get_asic_version()
 

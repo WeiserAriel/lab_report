@@ -9,6 +9,7 @@ import platform
 import subprocess
 import paramiko
 from netmiko import ConnectHandler
+import string
 
 
 class Device:
@@ -76,6 +77,8 @@ class Device:
             return 'manufacture.json'
         elif 'model' in function:
             return 'model.json'
+        elif 'get_inventory_json' in function:
+            return 'inventory.json'
         else:
             logging.error('could not get name of json')
 
@@ -111,24 +114,36 @@ class Device:
                 final_string = str(data[s_index:e_index + 1]).replace('\n', '').replace('\r', '')
                 final_string = self.remove_hostname(final_string, str(self.device_name).replace(' ',''))
                 j = json.loads(final_string)
+                if function == 'get_version_json':
+                    logging.debug('Removing unnessacryy keys from version dictionay ')
                 with open(filename, 'w') as outfile:
-                    # some commands return list:
-                    if type(j) == type(list()):
-
+                    if function == 'get_inventory_json':
+                        dictionary = {}
                         try:
-                            for d in j:
-                                d['Device_Name'] = str(self.device_name)
-                                json.dump(j, outfile)
+                            dictionary['Device_Name'] = str(self.device_name)
+                            dictionary['Part Number'] = j['CHASSIS'][0]['Part Number']
+                            json.dump(dictionary, outfile)
+                            return
                         except Exception as e:
-                            logging.error('Exception in adding device name to dictionary ' + str(e))
+                            logging.error('Exception in get inventory dump :' + str(e))
                     else:
-                        j['Device_Name'] = str(self.device_name)
-                        json.dump(j, outfile)
+                        # some commands return list:
+                        if type(j) == type(list()):
+                            try:
+                                for d in j:
+                                    d['Device_Name'] = str(self.device_name)
+                                    json.dump(j, outfile)
+                            except Exception as e:
+                                logging.error('Exception in adding device name to dictionary ' + str(e))
+                        else:
+                            j['Device_Name'] = str(self.device_name)
+                            json.dump(j, outfile)
             except Exception as e:
                 logging.error('Exception in dumping json to device : '+ str(self.device_name) + ' ' + str(e))
 
         except Exception as e:
             logging.error('Exception recieive in dump file for :' + self.device_name  + ' ' + str(e) )
+
 
     def remove_hostname(self,final_string, device_name ):
         logging.debug('Checking if the hostname returned in the output')
@@ -365,7 +380,12 @@ class Device:
         else:
             return None
 
-    def run_command(self, cmd, remove_asci='no', run_on_global=None):
+    def func(self, text):
+
+        printable = set(string.printable)
+        return filter(lambda x: x in printable, text)
+
+    def run_command(self, cmd, remove_asci='no', run_on_global=None, white_chars_removal=None):
         if (self.device_type == 'switch' or self.device_type == 'ufmapl' or 'GEN' in self.device_type ) and run_on_global == None:
             try:
                 logging.debug('Running command for switch or ufmapl :' + str(cmd))
