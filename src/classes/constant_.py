@@ -31,5 +31,8 @@ class Constants():
                 os.makedirs(folder, exist_ok=True)
                 os.chmod(folder, 0o777)
         except Exception as e:
-            logging.error('could not create/give permission for folder : '+ folder)
+            logging.error('could not create/give permission for folder : '+ folder + ' ' + str(e))
+            exit(-1)
+
+        logging.info('Start creating directories for all Constants folders are done ')
 

@@ -1,15 +1,10 @@
 
-
-
-
-
 from src.classes.hca_ import HCAs
 from src.classes.constant_ import Constants
 from src.classes.wrapper_ import Wapper
 from src.classes.xlswriter_ import XlsWriter
 
 ###################################################
-
 
 import argparse
 import logging
