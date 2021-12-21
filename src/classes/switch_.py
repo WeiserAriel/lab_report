@@ -1,7 +1,7 @@
 
 from .apl_host_ import Apl_Host
-from .constant_ import Constants
-from .device_ import Device
+from src.classes.constant_ import Constants
+from src.classes.device_ import Device
 import logging
 import time
 

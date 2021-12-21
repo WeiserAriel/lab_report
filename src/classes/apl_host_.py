@@ -1,5 +1,5 @@
 
-from .device_ import Device
+from src.classes.device_ import Device
 
 import logging
 import time

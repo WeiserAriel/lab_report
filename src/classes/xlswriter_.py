@@ -1,5 +1,5 @@
 
-from .constant_ import Constants
+from src.classes.constant_ import Constants
 
 import logging
 import os 

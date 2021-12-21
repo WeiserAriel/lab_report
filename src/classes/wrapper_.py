@@ -1,9 +1,9 @@
 
-from .apl_host_ import Apl_Host
-from .linux_host_ import Linux_Host
-from .switch_ import Switch
-from .constant_ import Constants
-from .device_ import Device
+from src.classes.apl_host_ import Apl_Host
+from src.classes.linux_host_ import Linux_Host
+from src.classes.switch_ import Switch
+from src.classes.constant_ import Constants
+from src.classes.device_ import Device
 
 import logging
 
