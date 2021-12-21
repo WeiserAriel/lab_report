@@ -1,13 +1,12 @@
-#Import classes#
 
 
 
-# from classes import Apl_
 
-from classes.hca_ import HCAs
 
-from classes.wrapper_ import Wapper
-from classes.xlswriter_ import XlsWriter
+from src.classes.hca_ import HCAs
+from src.classes.constant_ import Constants
+from src.classes.wrapper_ import Wapper
+from src.classes.xlswriter_ import XlsWriter
 
 ###################################################
 
@@ -20,28 +19,8 @@ with warnings.catch_warnings():
     warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
 import os
-import sys
 import re
 import datetime
-import platform    # For getting the operating system name
-import subprocess  # For executing a shell command
-import time
-from datetime import date
-import xlsxwriter
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-import json
-import time
-import shutil
-
-
-import csv
-#from pyping.core import *
-#import pyping
-
 
 
 
@@ -66,6 +45,7 @@ def main():
 
     logging.info("lab report Script Start...")
     begin_time = datetime.datetime.now()
+    Constants.create_directories()
     tmp = HCAs()
     email_list = Wapper.parse_email_file(args.email)
     device_list_ip = Wapper.parse_device_list(args.device_list)

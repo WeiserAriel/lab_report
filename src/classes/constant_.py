@@ -1,5 +1,7 @@
+import logging
+import os
+import shutil
 
-import os 
 
 class Constants():
     def __init__(self):
@@ -15,3 +17,19 @@ class Constants():
     root_hcas = root_folder + os.sep + 'hcas' + os.sep
     root_servers = root_folder + os.sep + 'servers' + os.sep
     ignore_devices = ['smg-ib-sw009','smg-ib-sw010','r-hpc-mg14']
+
+
+    @staticmethod
+    def create_directories():
+        logging.info('Start creating directories for all Constants folders')
+        folders = [Constants.root_report_lab, Constants.root_switch, Constants.root_hcas, Constants.root_servers, ]
+        try:
+            for folder in folders:
+                if os.path.isdir(folder):
+                    shutil.rmtree(folder)
+
+                os.makedirs(folder, exist_ok=True)
+                os.chmod(folder, 0o777)
+        except Exception as e:
+            logging.error('could not create/give permission for folder : '+ folder)
+
