@@ -137,6 +137,7 @@ class Device:
                                 logging.error('Exception in adding device name to dictionary ' + str(e))
                         else:
                             j['Device_Name'] = str(self.device_name)
+                            j['Version summary'] = str.join(" ",str(j['Version summary']).split(' ')[0:2])
                             json.dump(j, outfile)
             except Exception as e:
                 logging.error('Exception in dumping json to device : '+ str(self.device_name) + ' ' + str(e))
