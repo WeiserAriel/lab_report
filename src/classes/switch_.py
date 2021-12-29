@@ -66,7 +66,8 @@ class Switch(Device):
         # shell Object is not ready so sleeping for 3 seconds.
         try:
             out = super().run_command(cmd)
-            super().dump_file('show asic-version', out,Constants.root_switch)
+            if 'No managed switch devices found' not in out:
+                super().dump_file('show asic-version', out,Constants.root_switch)
         except Exception as e:
             logging.error("Exception in show asic-version | json-print " + str(e))
 
