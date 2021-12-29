@@ -62,6 +62,8 @@ class XlsWriter():
         worksheet.autofilter(0,0,int(len(self.devices_objects)+1),int(len(fieldnames) - 1))
         logging.debug("closing workbook")
         workbook.close()
+        logging.info('Saving the workbook under : ' + str(self.filename))
+        self.save_workbook(self.filename)
         #Skipping the send email part.
         #self.send_email_to_recipient(self.recepients)
 
