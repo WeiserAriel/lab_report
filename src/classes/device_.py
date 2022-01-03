@@ -132,7 +132,8 @@ class Device:
                             try:
                                 for d in j:
                                     d['Device_Name'] = str(self.device_name)
-                                    json.dump(j, outfile)
+
+                                json.dump(j, outfile)
                             except Exception as e:
                                 logging.error('Exception in adding device name to dictionary ' + str(e))
                         else:
