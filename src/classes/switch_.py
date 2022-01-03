@@ -77,8 +77,18 @@ class Switch(Device):
         self.get_inventory_json()
         #self.get_interface_ib_status()
         self.get_asic_version()
+        self.get_system_type()
 
+    def get_system_type(self):
+        logging.debug('Starting get system type for : ' + self.device_name)
+        try:
+            cmd = 'show system type | json-print'
+            # shell Object is not ready so sleeping for 3 seconds.
+            out = super().run_command(cmd)
+            super().dump_file('system_type', out, Constants.root_switch)
 
+        except Exception as e:
+            logging.error('Exception in get system type : ' +  self.device_name)
 
     def get_all_properties(self):
         logging.debug("Getting all properties for switch : " + self.device_name)

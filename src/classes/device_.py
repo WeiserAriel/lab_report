@@ -79,6 +79,8 @@ class Device:
             return 'model.json'
         elif 'get_inventory_json' in function:
             return 'inventory.json'
+        elif 'system_type' in function:
+            return 'system_type.json'
         else:
             logging.error('could not get name of json')
 
@@ -117,11 +119,19 @@ class Device:
                 if function == 'get_version_json':
                     logging.debug('Removing unnessacryy keys from version dictionay ')
                 with open(filename, 'w') as outfile:
+                    dictionary = {}
                     if function == 'get_inventory_json':
-                        dictionary = {}
                         try:
                             dictionary['Device_Name'] = str(self.device_name)
                             dictionary['Part Number'] = j['CHASSIS'][0]['Part Number']
+                            json.dump(dictionary, outfile)
+                            return
+                        except Exception as e:
+                            logging.error('Exception in get inventory dump :' + str(e))
+                    elif function == 'system_type':
+                        try:
+                            dictionary['Device_Name'] = str(self.device_name)
+                            dictionary['System Type'] = j['value'][0]
                             json.dump(dictionary, outfile)
                             return
                         except Exception as e:
