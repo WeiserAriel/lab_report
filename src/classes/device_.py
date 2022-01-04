@@ -10,6 +10,7 @@ import subprocess
 import paramiko
 from netmiko import ConnectHandler
 import string
+from ping3 import ping
 
 
 class Device:
@@ -57,7 +58,7 @@ class Device:
     def get_all_device_properties(self):
         #checking ping to MGMT
         if self.ssh_client:
-            if self.ping_device(self.ip):
+            if self.ping_device_pyping(self.ip):
                 self.ip_reply = 'Yes'
             else:
                 self.ip_reply= 'No'
@@ -320,7 +321,7 @@ class Device:
         logging.debug("start init_ssh ")
         ip = self.ip
         #check if i have a ping before starting ssh session:
-        if self.ping_device(ip) == True:
+        if self.ping_device_pyping(ip) == True:
             try:
                 logging.debug("try to connect via SSH to :" + self.device_name)
                 ssh_client = self.SSHConnect(ip, username, password)
@@ -345,6 +346,16 @@ class Device:
 
         return subprocess.call(command) == 0
 
+
+    def ping_device_pyping(self, host):
+        logging.debug("'Sending ping to " + str(host))
+        r = ping(host)
+        if r:
+            logging.debug("'Sending ping to " + str(host) + ' succussded')
+            return True
+        else:
+            logging.debug("'Sending ping to " + str(host) + ' failed')
+            return False
 
 
     def SSHConnect(self, ip, username, passowrd):

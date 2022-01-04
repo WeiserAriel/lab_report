@@ -120,7 +120,7 @@ class Linux_Host(Device):
         super().set_hw_address()
 
     def check_ilo_works(self):
-        if super().ping_device(self.ilo_ip):
+        if super().ping_device_pyping(self.ilo_ip):
             self.ilo_works = 'Yes'
         else:
             self.ilo_works = 'No'

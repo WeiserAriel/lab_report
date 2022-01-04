@@ -52,8 +52,15 @@ def main():
     filename = log_file
     f = open(filename, "r")
     info = re.findall('ERROR', f.read())
+
+
     print('Script finished after : '+  str(datetime.datetime.now() - begin_time))
+
+
+
     print('Log file Path: ' + log_file)
+
+
     if info:
         print('\nScript has finished with :'+ str(len(info)) + ' errors')
     else:
