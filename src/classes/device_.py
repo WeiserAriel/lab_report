@@ -349,13 +349,22 @@ class Device:
 
     def ping_device_pyping(self, host):
         logging.debug("'Sending ping to " + str(host))
-        r = ping(host)
-        if r:
-            logging.debug("'Sending ping to " + str(host) + ' succussded')
-            return True
-        else:
-            logging.debug("'Sending ping to " + str(host) + ' failed')
-            return False
+        try:
+            r = ping(host)
+            if r:
+                logging.debug("'Sending ping to " + str(host) + ' succussded')
+                return True
+            else:
+                logging.debug("'Sending ping to " + str(host) + ' failed')
+                return False
+        except Exception as e:
+            logging.error('Exeception in ping : ' + str(e))
+
+
+
+
+
+
 
 
     def SSHConnect(self, ip, username, passowrd):
