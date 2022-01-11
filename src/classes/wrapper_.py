@@ -156,7 +156,7 @@ class Wapper():
                         tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
                     else:
                         logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
-                elif 'sw' in row:
+                elif 'sw' in row or 'gw' in row or 'olg' in row:
                     logging.debug("device identify as switch : " + device_name)
                     tmp_device = Switch(device_ip, device_name, 'switch',dev,owner)
                 else:
