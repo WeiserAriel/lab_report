@@ -1,3 +1,4 @@
+import sys
 
 from src.classes.hca_ import HCAs
 from src.classes.constant_ import Constants
@@ -63,13 +64,16 @@ def main():
 
     if info:
         print('\nScript has finished with :'+ str(len(info)) + ' errors')
+        return int(len(info))
     else:
         print('\nScript is ended with 0 errors')
+        return 0
 
 
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
+
 
 
