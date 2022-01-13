@@ -66,7 +66,7 @@ class Switch(Device):
         # shell Object is not ready so sleeping for 3 seconds.
         try:
             out = super().run_command(cmd)
-            if 'No managed switch devices found' not in out:
+            if 'No managed switch devices found' not in out and 'gw' not in self.device_name:
                 super().dump_file('show asic-version', out,Constants.root_switch)
         except Exception as e:
             logging.error("Exception in show asic-version | json-print " + str(e))
@@ -85,7 +85,8 @@ class Switch(Device):
             cmd = 'show system type | json-print'
             # shell Object is not ready so sleeping for 3 seconds.
             out = super().run_command(cmd)
-            super().dump_file('system_type', out, Constants.root_switch)
+            if not 'gw' in self.device_name:
+                super().dump_file('system_type', out, Constants.root_switch)
 
         except Exception as e:
             logging.error('Exception in get system type : ' +  self.device_name)

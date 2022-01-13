@@ -123,6 +123,9 @@ class Device:
                     dictionary = {}
                     if function == 'get_inventory_json':
                         try:
+                            if not 'MGMT' in j.keys():
+                                logging.critical('switch has no MGMT in his json which can break the functionality. skip it. ')
+                                return
                             dictionary['Device_Name'] = str(self.device_name)
                             dictionary['Part Number'] = j['CHASSIS'][0]['Part Number']
                             json.dump(dictionary, outfile)
@@ -152,6 +155,9 @@ class Device:
                             j['Device_Name'] = str(self.device_name)
                             if 'show asic-version' not in function:
                                 j['Version summary'] = str.join(" ",str(j['Version summary']).split(' ')[0:2])
+                            if not 'MGMT' in j.keys():
+                                logging.critical('switch has no MGMT in his json which can break the functionality. skip it. ')
+                                return
                             json.dump(j, outfile)
             except Exception as e:
                 logging.error('Exception in dumping json to device in function: ' + str(function) + ' for device : ' + str(self.device_name) + ' ' + str(e))
