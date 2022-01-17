@@ -40,6 +40,7 @@ def main():
                         filemode='w')
 
     logging.info("lab report Script Start...")
+    print('Log file Path: ' + log_file)
     begin_time = datetime.datetime.now()
     Constants.create_directories()
     tmp = HCAs()
