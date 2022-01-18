@@ -99,7 +99,7 @@ class Apl_Host(Device):
     def confiure_appliance_license(self):
         logging.debug("start to confiure license to " + self.device_name)
         mac = self.hw_address
-        cmd = '/builds/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac 
+        cmd = '/builds2/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac
         license = self.run_command(cmd,run_on_global='Yes')
 
         
