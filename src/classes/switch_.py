@@ -23,10 +23,6 @@ class Switch(Device):
         logging.debug("finish building switch class for : " + device_name)
 
 
-
-
-
-
     def get_version_json(self):
         logging.debug("Getting get_version_json for switch : " + self.device_name)
         cmd = 'show version | json-print'
