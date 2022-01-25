@@ -125,6 +125,8 @@ class Device:
                         try:
                             if not 'MGMT' in j.keys():
                                 logging.critical('switch has no MGMT in his json which can break the functionality. skip it. ')
+                                outfile.close()
+                                os.remove(filename)
                                 return
                             dictionary['Device_Name'] = str(self.device_name)
                             dictionary['Part Number'] = j['CHASSIS'][0]['Part Number']

@@ -20,6 +20,7 @@ import datetime
 
 
 
+
 def main():
     parser = argparse.ArgumentParser(description='This is tool generate report for all lab devices')
     parser.add_argument('--device_list',     dest='device_list', help='path to device list file', required=True)
@@ -53,7 +54,9 @@ def main():
     file = "lab_report.log"
     filename = log_file
     f = open(filename, "r")
+    Wapper.check_empty_files(Constants.root_folder)
     info = re.findall('ERROR', f.read())
+
 
 
     print('Script finished after : '+  str(datetime.datetime.now() - begin_time))

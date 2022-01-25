@@ -4,10 +4,27 @@ from src.classes.linux_host_ import Linux_Host
 from src.classes.switch_ import Switch
 from src.classes.constant_ import Constants
 from src.classes.device_ import Device
+import glob
 
 import logging
+import os
 
 class Wapper():
+
+    @staticmethod
+    def check_empty_files(root_path):
+        logging.info('Make sure there is no empty files in root directory')
+        os.chdir(root_path)
+
+        for file in glob.glob(root_path + '/**/*.json', recursive=True):
+            logging.debug('Check if ' + file + ' is empty :')
+            if os.path.getsize(file) > 0:
+                logging.debug('File is not Empty')
+            else:
+                logging.error('file : ' + str(file) + ' is empty')
+
+        logging.info('finish function of check empty files ')
+
 
     @staticmethod
     def split_range(part):
