@@ -9,7 +9,12 @@ import logging
 
 class Linux_Host(Device):
     def __init__(self, device_ip, device_name, device_type,linux_device,owner):
-        super().__init__(device_ip,device_name,device_type,'root','3tango',linux_device,owner)
+        if device_type == 'GEN4':
+            super().__init__(device_ip, device_name, device_type, 'root', 'UFMcyberAI', linux_device, owner)
+        elif device_type == 'GEN3':
+            super().__init__(device_ip, device_name, device_type, 'root', 'UFMappliance', linux_device, owner)
+        else:
+            super().__init__(device_ip,device_name,device_type,'root','3tango',linux_device,owner)
         self.ilo_ip = None
         self.ilo_works = None
         self.ports = ['n/a','n/a','n/a','n/a']

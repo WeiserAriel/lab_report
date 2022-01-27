@@ -176,9 +176,10 @@ class Wapper():
                         elif 'gen2' in row:
                             tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner)
                         elif 'gen3' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN3', dev,owner)
+                            tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner)
                         elif 'gen4' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
+                            tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner)
+                            #tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
                         else:
                             logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
                     elif 'sw' in row or 'gw' in row or 'olg' in row:
