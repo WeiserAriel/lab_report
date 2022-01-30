@@ -16,8 +16,9 @@ from ping3 import ping
 class Device:
     global_deivce_obj = None
     counter = 0
-    def __init__(self, device_ip, device_name, device_type, username, password, linux_device, owner):
+    def __init__(self, device_ip, device_name, device_type, username, password, linux_device, owner,group_name):
         self.owner = owner
+        self.group_name = group_name
         self.linux_device = linux_device
         self.ip = device_ip
         self.ip_reply = 'n/a'

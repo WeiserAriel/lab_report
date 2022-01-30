@@ -34,7 +34,7 @@ class XlsWriter():
         # Create a workbook and add a worksheet.
         workbook = xlsxwriter.Workbook(self.filename)
         worksheet = workbook.add_worksheet()
-        fieldnames = ['Owner','Device Name', 'Device Type', 'MGMT IP', 'MGMT PING', 'ILO IP', 'IPO PING', 'HW ADDRESS', 'CA Type#1',
+        fieldnames = ['Owner','Group','Device Name', 'Device Type', 'MGMT IP', 'MGMT PING', 'ILO IP', 'IPO PING', 'HW ADDRESS', 'CA Type#1',
                       'CA Type#2', 'CA Type#3', 'CA Type #4', 'Total Memory', 'OFED Version','OS Version', 'dmidecode']
         logging.debug("adding fildnames into xls file")
         for field in fieldnames:

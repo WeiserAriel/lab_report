@@ -5,6 +5,7 @@ from src.classes.switch_ import Switch
 from src.classes.constant_ import Constants
 from src.classes.device_ import Device
 import glob
+import re
 
 import logging
 import os
@@ -58,21 +59,24 @@ class Wapper():
         
         devices = {}
         #split the row to ',':
-        owner = row.split(':')[0]
-        row_without_owner = row.split(':')[1]
-        row_commas = row_without_owner.split(',')
-        for part in row_commas:
-            if part == '':
-                continue
-            if '[' in part:
-                devs = Wapper.split_range(part)
-                for dev in devs:
-                    devices[dev] = owner
-                    #devices.append(dev)
-            else:
-                logging.debug('adding ' + str(part) + ' to container')
-                devices[part] = owner
-                #devices.append(part)
+        try:
+            owner = row.split(':')[0]
+            row_without_owner = row.split(':')[1]
+            row_commas = row_without_owner.split(',')
+            for part in row_commas:
+                if part == '':
+                    continue
+                if '[' in part:
+                    devs = Wapper.split_range(part)
+                    for dev in devs:
+                        devices[dev] = owner
+                        #devices.append(dev)
+                else:
+                    logging.debug('adding ' + str(part) + ' to container')
+                    devices[part] = owner
+                    #devices.append(part)
+        except Exception as e:
+            logging.error('Exceptopn on get devices in a row ')
 
         return devices
             
@@ -86,21 +90,49 @@ class Wapper():
         with open(device_list, 'r') as f:
             data = f.read()
             rows = data.splitlines()
-            for row in rows:
-                if row.startswith('#') or row == '\n' or row == '' :
-                    continue
-                else:
-                    devs_in_row_dict = Wapper.get_devices_in_row(row)
-                    for dev in devs_in_row_dict.keys():
-                        # check if the device is already registered on any member, if it is registered
-                        # we can skip it, if not we need to registered it as un used.
-                        if (Wapper.is_device_in_list(dev_container, dev)):
-                            logging.debug("skipping current device since it's already registered on someone : " + dev)
-                            continue
-                        dev_container[dev] = devs_in_row_dict[dev]
+            dictionary_of_groups = Wapper.split_to_groups(rows)
+            for group_name,rows in dictionary_of_groups.items():
+                for row in rows:
+                    if row.startswith('#') or row == '\n' or row == '' :
+                        continue
+                    else:
+                        devs_in_row_dict = Wapper.get_devices_in_row(row)
+                        for dev in devs_in_row_dict.keys():
+                            # check if the device is already registered on any member, if it is registered
+                            # we can skip it, if not we need to registered it as un used.
+                            if (Wapper.is_device_in_list(dev_container, dev, group_name)):
+                                logging.debug("skipping current device since it's already registered on someone : " + dev)
+                                continue
+                            dev_container[dev] = devs_in_row_dict[dev],group_name
 
         return dev_container
-       
+    @staticmethod
+    def split_to_groups(rows):
+        dictionary_of_groups = {}
+
+        logging.info('Splitting rows per groups started')
+        try:
+            for _r in rows:
+                m = re.search('<.*>', _r)
+                if m:
+                    group_name = str(m.group(0))[1:-1]
+                else:
+                    if group_name in dictionary_of_groups.keys():
+                        _l = dictionary_of_groups[group_name]
+                        _l.append(_r)
+                        dictionary_of_groups[group_name] =_l
+                    else:
+                        _l = list()
+                        _l.append(_r)
+                        dictionary_of_groups[group_name] = _l
+
+        except Exception as e:
+            logging.error('Exception in split to group ' + str(e))
+            exit(-1)
+
+        logging.info('Splitting rows per groups ends')
+        return  dictionary_of_groups
+
     @staticmethod
     def parse_email_file(filename):
         lst = []
@@ -114,7 +146,7 @@ class Wapper():
         return lst
 
     @staticmethod
-    def is_device_in_list(dev_container, dev):
+    def is_device_in_list(dev_container, dev,group_name):
         logging.debug("verifiying if the device is in the list")
         for device in dev_container.keys():
             if device == dev:
@@ -131,7 +163,7 @@ class Wapper():
         main_device_ip = '10.209.36.54'
         logging.debug("connecting to " + main_device+ " to create device list")
         try:
-            dev = Device(main_device_ip, main_device,'linux_host' ,'root', '3tango',None,'Nobody')
+            dev = Device(main_device_ip, main_device,'linux_host' ,'root', '3tango',None,'Nobody','Nobody')
             if dev.ssh_client == None:
                 logging.error('Couldnt create SSH connection for main device : ' + main_device + ' Exit script ')
                 exit(-1)
@@ -141,7 +173,7 @@ class Wapper():
         try:
             for device in device_list_ip.keys():
                 logging.debug(" start Creating device object for :" + device)
-                owner = device_list_ip[device]
+                owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
                 #identify from DHCP what type of device is it:
                 logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
                 cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device
@@ -170,24 +202,24 @@ class Wapper():
                         #check if this is gen2 or gen1
                         logging.debug("device identiry as appliance : " + device_name)
                         if 'gen1' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner)
+                            tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner,group_name)
                         elif 'gen25' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner)
+                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner,group_name)
                         elif 'gen2' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner)
+                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner,group_name)
                         elif 'gen3' in row:
-                            tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner)
+                            tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner,group_name)
                         elif 'gen4' in row:
-                            tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner)
+                            tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner,group_name)
                             #tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
                         else:
                             logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
                     elif 'sw' in row or 'gw' in row or 'olg' in row:
                         logging.debug("device identify as switch : " + device_name)
-                        tmp_device = Switch(device_ip, device_name, 'switch',dev,owner)
+                        tmp_device = Switch(device_ip, device_name, 'switch',dev,owner,group_name)
                     else:
                         logging.debug("device identify as linux host : " + device_name)
-                        tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner)
+                        tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner,group_name)
                     logging.debug("append deivice after creation to device list : " + device_name)
                     device_list.append(tmp_device)
                 else:

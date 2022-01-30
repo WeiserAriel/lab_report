@@ -8,13 +8,13 @@ import logging
 
 
 class Linux_Host(Device):
-    def __init__(self, device_ip, device_name, device_type,linux_device,owner):
+    def __init__(self, device_ip, device_name, device_type,linux_device,owner,group_name):
         if device_type == 'GEN4':
-            super().__init__(device_ip, device_name, device_type, 'root', 'UFMcyberAI', linux_device, owner)
+            super().__init__(device_ip, device_name, device_type, 'root', 'UFMcyberAI', linux_device, owner,group_name)
         elif device_type == 'GEN3':
-            super().__init__(device_ip, device_name, device_type, 'root', 'UFMappliance', linux_device, owner)
+            super().__init__(device_ip, device_name, device_type, 'root', 'UFMappliance', linux_device, owner,group_name)
         else:
-            super().__init__(device_ip,device_name,device_type,'root','3tango',linux_device,owner)
+            super().__init__(device_ip,device_name,device_type,'root','3tango',linux_device,owner,group_name)
         self.ilo_ip = None
         self.ilo_works = None
         self.ports = ['n/a','n/a','n/a','n/a']
@@ -88,7 +88,7 @@ class Linux_Host(Device):
 
     def get_all_values(self):
         #Owner,Device Name,Device_type, MGMT_ip, MGMT Ping, ilo IP, ilo ping. HW address, CA Type#1, CA Type #2, CA Type#3, CA Type#4, Total Memory, OFED Version, OS Version, dmidecode
-        return self.owner,self.device_name, self.device_type, self.ip, self.ip_reply, self.ilo_ip, self.ilo_works, self.hw_address,\
+        return self.owner,self.group_name,self.device_name, self.device_type, self.ip, self.ip_reply, self.ilo_ip, self.ilo_works, self.hw_address,\
                self.ports[0],self.ports[1],self.ports[2],self.ports[3], self.memory, self.ofed, self.os_version, self.dmidecode
     
     def get_dmidecode(self):
