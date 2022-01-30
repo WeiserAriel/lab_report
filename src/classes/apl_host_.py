@@ -6,8 +6,8 @@ import time
 
 
 class Apl_Host(Device):
-    def __init__(self, device_ip, device_name, device_type,linux_device,owner):
-        super().__init__(device_ip,device_name,device_type,'admin','admin',linux_device,owner)
+    def __init__(self, device_ip, device_name, device_type,linux_device,owner,group_name):
+        super().__init__(device_ip,device_name,device_type,'admin','admin',linux_device,owner,group_name)
         self.ilo_ip = 'n/a'
         self.ilo_works = 'n/a'
         self.ports = ['n/a','n/a','n/a','n/a','n/a']

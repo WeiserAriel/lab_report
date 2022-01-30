@@ -206,7 +206,7 @@ class Wapper():
                         elif 'gen25' in row:
                             tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner,group_name)
                         elif 'gen2' in row:
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner,group_name)
+                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner, group_name)
                         elif 'gen3' in row:
                             tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner,group_name)
                         elif 'gen4' in row:
