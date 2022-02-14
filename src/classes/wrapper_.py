@@ -198,6 +198,9 @@ class Wapper():
                         continue
                     if device_name in Constants.ignore_devices:
                         continue
+                    elif Wapper.is_exist_in_devices_list(device_list,device_name):
+                        logging.debug('The device was exist in device_list. skip')
+                        continue
                     elif 'apl' in row:
                         #check if this is gen2 or gen1
                         logging.debug("device identiry as appliance : " + device_name)
@@ -221,6 +224,7 @@ class Wapper():
                         logging.debug("device identify as linux host : " + device_name)
                         tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner,group_name)
                     logging.debug("append deivice after creation to device list : " + device_name)
+
                     device_list.append(tmp_device)
                 else:
                     logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
@@ -230,3 +234,14 @@ class Wapper():
 
             #Print the results from the container.
 
+    @staticmethod
+    def is_exist_in_devices_list(device_list, device_name):
+        logging.debug('Checking if the device was added for the device list already')
+        try:
+            for _d in device_list:
+                if _d.device_name == device_name:
+                    return True
+            else:
+                return False
+        except Exception as e:
+            logging.error('Exception in is_exist_in_devices_list function ' + str(e))
