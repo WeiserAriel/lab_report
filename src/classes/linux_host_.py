@@ -22,6 +22,7 @@ class Linux_Host(Device):
         self.ofed = 'n/a'
         self.os_version = 'n/a'
         self.dmidecode = 'n/a'
+        self.kernel = 'n/a'
         #start collecting information
         self.get_ilo_ip()
         self.check_ilo_works()
@@ -29,6 +30,16 @@ class Linux_Host(Device):
             self.get_all_properties()
         logging.debug("finish building linux host class for " + device_name)
 
+    def get_kernel_version(self):
+        logging.debug('Start get kernel version')
+        try:
+            cmd = r'''uname -r'''
+            out = super().run_command(cmd)
+            super().dump_file('get_kernel_version', out, Constants.root_servers)
+
+        except Exception as e:
+            logging.error('Exception in get kernel version: ' + str(e))
+        logging.debug('End get kernel version')
 
     def get_all_properties(self):
 
@@ -42,6 +53,7 @@ class Linux_Host(Device):
             self.get_dmidecode()
             self.lshca()
             self.getServerModelandType()
+            self.get_kernel_version()
 
     def getModel(self):
         logging.info('Starting Get Model function for device : ' + str(self.device_name))

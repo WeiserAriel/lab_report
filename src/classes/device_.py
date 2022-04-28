@@ -83,6 +83,8 @@ class Device:
             return 'inventory.json'
         elif 'system_type' in function:
             return 'system_type.json'
+        elif 'get_kernel_version' in function:
+            return 'kernel_version.json'
         else:
             logging.error('could not get name of json')
 
@@ -97,7 +99,7 @@ class Device:
             try:
                 logging.debug('dump json to file: ')
                 #WA
-                if function == 'manufacture' or function == 'product_model':
+                if function == 'manufacture' or function == 'product_model' or function == 'get_kernel_version':
                     try:
                         dic_ = dict()
                         dic_[function] = data
