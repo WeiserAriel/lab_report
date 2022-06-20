@@ -1,8 +1,11 @@
+import re
 
 from src.classes.device_ import Device
+from src.classes.Cables_ import Cables
 
 import logging
 import time
+
 
 
 class Apl_Host(Device):
@@ -23,6 +26,10 @@ class Apl_Host(Device):
         logging.debug("finish building appliance class for :" + device_name)
 
     # start collecting information
+
+    def save_ufm_version(self):
+        super().save_ufm_version()
+
     def get_all_properties(self, has_shell):
         self.get_ilo_ip()
         self.check_ilo_works()
@@ -38,6 +45,46 @@ class Apl_Host(Device):
             self.set_enable_configure_terminal()
             self.get_os_version()
             self.get_hw_address()
+            if self.check_if_ufm_host():
+                self.Cables = Cables(self.device_name)
+                self.save_ufm_version()
+
+    def get_ufm_version(self):
+        if self.is_ufm_host:
+            logging.debug(f"get ufm version for {self.device_name}")
+            cmd = "show version"
+            output = self.run_command('cmd', remove_asci='yes')
+            try:
+                res = re.match('UFM\s*Running', output)
+                if res:
+                    self.ufm_version = res
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                logging.error(f"Exeception occured in get version for {self.device_name}: {str(e)}")
+
+    def check_if_ufm_host(self):
+        try:
+            logging.debug(f"checking if ufmapl is running on server {self.device_name}")
+            output = self.run_command('show ufm status',remove_asci='yes')
+            res = re.match('UFM\s*Running',output)
+            if res:
+                self.is_ufm_host = True
+                logging.debug(f"ufm is running on server {self.device_name}")
+                self.ufm_version = self.get_ufm_version()
+                return  True
+            else:
+                self.is_ufm_host = False
+                logging.debug(f"ufm isn't running on server {self.device_name}")
+                return  False
+
+        except Exception as e:
+            logging.error(f"Exception in check_if_ufm_host on ufmapl {self.device_name}:  {str(e)}")
+
+        logging.debug(f"server : {self.device_name} is  ufm host")
+        self.is_ufm_host = True
+        self.ufm_version = self.get_ufm_version()
 
     def change_to_cli(self):
         logging.debug("Changing to cli mode in : " + self.device_name )

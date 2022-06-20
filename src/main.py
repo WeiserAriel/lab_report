@@ -21,6 +21,7 @@ import datetime
 
 
 
+
 def main():
     parser = argparse.ArgumentParser(description='This is tool generate report for all lab devices')
     parser.add_argument('--device_list',     dest='device_list', help='path to device list file', required=True)
@@ -78,6 +79,14 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+
+
+
+
+
+
 
 
 

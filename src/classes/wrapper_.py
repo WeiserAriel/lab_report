@@ -9,6 +9,7 @@ import re
 
 import logging
 import os
+import datetime
 
 class Wapper():
 
@@ -25,6 +26,20 @@ class Wapper():
                 logging.error('file : ' + str(file) + ' is empty')
 
         logging.info('finish function of check empty files ')
+
+    @staticmethod
+    def debug_function_decorator(func):
+
+        def inner(*args, **kwargs):
+            now = datetime.datetime.now()
+            logging.debug("starting the function :" + func.__name__ + " at : " + str(now))
+            results = func(*args, **kwargs)
+
+            end = datetime.datetime.now()
+            logging.debug("Ending the function :" + func.__name__ + " at : " + str(end - now))
+            return results
+
+        return inner()
 
 
     @staticmethod
@@ -229,7 +244,7 @@ class Wapper():
                 else:
                     logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
         except Exception as e:
-            logging.error('Exception in Create_devices_objects for device : ' + device)
+            logging.error('Exception in Create_devices_objects for device : ' + device + " " + str(e))
         return device_list
 
             #Print the results from the container.

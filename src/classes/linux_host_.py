@@ -1,5 +1,6 @@
+import re
 
-
+from src.classes.Cables_ import Cables
 from src.classes.constant_ import Constants
 from src.classes.device_ import Device
 
@@ -54,6 +55,47 @@ class Linux_Host(Device):
             self.lshca()
             self.getServerModelandType()
             self.get_kernel_version()
+            if self.check_if_ufm_host():
+                self.Cables_obj = Cables(self.device_name,self.owner)
+                self.save_ufm_version()
+
+    def save_ufm_version(self):
+        super().save_ufm_version()
+
+    def check_if_ufm_host(self):
+        try:
+            proccess = ['opensm','ModelMain.pyc']
+            logging.debug(f"checking if {self.device_name} has ufm running ")
+            for p in proccess:
+                cmd = f"ps -ef | grep {p}"
+                output = self.run_command(cmd=cmd,remove_asci='yes')
+                if re.findall(f"\Sopt\S.*\S{p}", output):
+                    logging.debug(f"server : {self.device_name} is  running {p} ")
+                else:
+                    logging.debug(f"server : {self.device_name} is  not running {p}")
+                    self.is_ufm_host = False
+                    return False
+
+        except Exception as e:
+            logging.error('Exception in check_if_ufm_host : ' + str(e))
+
+        logging.debug(f"server : {self.device_name} is  ufm host")
+        self.is_ufm_host = True
+        self.get_ufm_version()
+        return  True
+
+    def get_ufm_version(self):
+        try:
+            cmd = f" cat /opt/ufm/version/release "
+            out = super().run_command(cmd)
+            if out:
+                self.ufm_version = out
+                self.ufm_version = str(self.ufm_version.replace("build", '.')).replace(" ", "")
+                logging.debug(f"found ufm version for {self.device_name} : {self.ufm_version}")
+            else:
+                logging.debug(f"didn't find ufm version for {self.device_name}")
+        except Exception as e:
+            logging.error(f"Exception occured in get ufm version for {self.device_name}: {str(e)}")
 
     def getModel(self):
         logging.info('Starting Get Model function for device : ' + str(self.device_name))

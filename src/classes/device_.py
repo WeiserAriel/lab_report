@@ -11,7 +11,9 @@ import paramiko
 from netmiko import ConnectHandler
 import string
 from ping3 import ping
+import abc
 
+from  src.classes.constant_ import Constants
 
 class Device:
     global_deivce_obj = None
@@ -31,7 +33,30 @@ class Device:
         #start collecting device properties:
         self.get_all_device_properties()
         self.save_global_obj()
+        self.is_ufm_host = False
+        self.ufm_version = None
+
         logging.debug("finish building device class for :" + device_name)
+
+
+    def save_ufm_version(self):
+        if self.is_ufm_host:
+            logging.debug(f"saving ufm version into json file")
+            try:
+                dic = {}
+                dic["owner_name"] = self.owner
+                dic["device_name"] = self.device_name
+                dic["ufm_version"] = self.ufm_version
+
+                dir =f"{Constants.root_ufm_versions}{self.device_name}"
+                filename = f"{dir}{os.sep}ufm_version.json"
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+                with open(filename, 'w') as fp:
+                    json.dump(dic,fp)
+            except Exception as e:
+                logging.error(f"Exception in save ufm version for {self.device_name} : {str(e)}")
+            logging.debug(f"finish dumpping ufm version for : {self.device_name}")
 
     def save_global_obj(self):
         try:
@@ -41,6 +66,9 @@ class Device:
             Device.counter = Device.counter +1
         except Exception as e:
             logging.error('Exception in save global object ' + str(e))
+
+
+
 
 
     def set_enable_configure_terminal(self):
@@ -361,16 +389,20 @@ class Device:
 
     def ping_device_pyping(self, host):
         logging.debug("'Sending ping to " + str(host))
-        try:
-            r = ping(host)
-            if r:
-                logging.debug("'Sending ping to " + str(host) + ' succussded')
-                return True
-            else:
-                logging.debug("'Sending ping to " + str(host) + ' failed')
-                return False
-        except Exception as e:
-            logging.error('Exeception in ping : ' + str(e))
+        for t in range(1,5):
+            try:
+                r = ping(host)
+                if r:
+                    logging.debug("'Sending ping to " + str(host) + ' succussded')
+                    return True
+                else:
+                    logging.debug(f"Sending ping to {str(host)} failed for the {str(t)} time.. sleeping for 1 second.")
+                    time.sleep(1)
+            except Exception as e:
+                logging.error('Exeception in ping : ' + str(e))
+
+        logging.debug("Sending ping to " + str(host) + ' failed for all # ' + str(t) + " times")
+        return False
 
 
 
@@ -432,10 +464,14 @@ class Device:
         return filter(lambda x: x in printable, text)
 
     def run_command(self, cmd, remove_asci='no', run_on_global=None, white_chars_removal=None):
-        if (self.device_type == 'switch' or self.device_type == 'ufmapl' or 'GEN' in self.device_type ) and run_on_global == None:
+        if (self.device_type == 'switch' or self.device_type == 'ufmapl' or self.device_type in ['GEN2','GEN2.5','GEN3','GEN4']  ) and run_on_global == None:
+
             try:
                 logging.debug('Running command for switch or ufmapl :' + str(cmd))
                 output = self.ssh_client.send_command_timing(cmd)
+                if output == "":
+                    #for some reason when i debug i have to use different function.
+                    output = self.ssh_client.send_command(cmd)
                 if remove_asci == 'no':
                     return output
                 else:
@@ -452,7 +488,7 @@ class Device:
             except Exception as e:
                 logging.error('Exception in running command ' + str(e))
 
-        elif self.device_type == 'linux_host' or run_on_global != None:
+        elif self.device_type in ['linux_host'] or run_on_global != None:
             try:
                 if run_on_global:
                     stdin, stdout, stderr = Device.global_deivce_obj.ssh_client.exec_command(cmd)

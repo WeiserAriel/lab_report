@@ -14,6 +14,7 @@ from email import encoders
 
 class XlsWriter():
     def __init__(self, devices_obj, recepients):
+
         self.devices_objects = devices_obj
         self.recepients = recepients
         self.create_xls()
