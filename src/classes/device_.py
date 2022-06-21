@@ -487,6 +487,7 @@ class Device:
                         return None
             except Exception as e:
                 logging.error('Exception in running command ' + str(e))
+                logging.error(f"output =\n\n{output}\n\n ")
 
         elif self.device_type in ['linux_host'] or run_on_global != None:
             try:
