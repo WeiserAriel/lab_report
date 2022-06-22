@@ -66,10 +66,16 @@ class Apl_Host(Device):
 
     def check_if_ufm_host(self):
         try:
+            cmd = 'show ufm status'
             logging.debug(f"checking if ufmapl is running on server {self.device_name}")
-            output = self.run_command('show ufm status',remove_asci='yes')
+            output = self.run_command(cmd,remove_asci='yes')
             if output:
-                res = re.match('UFM\s*Running',output)
+                try:
+                    res = re.match('UFM\s*Running',output)
+                except Exception as e:
+                    logging.error(f"couldn't find any match of regex in check_if_ufm_host in server : {self.device_name}\n res = {str(res)}")
+                    self.is_ufm_host = False
+                    return False
             else:
                 logging.error(f"the output returns as None in : check_if_ufm_host function")
             if res:
@@ -83,7 +89,7 @@ class Apl_Host(Device):
                 return  False
 
         except Exception as e:
-            logging.error(f"Exception in check_if_ufm_host on ufmapl {self.device_name}:  {str(e)}")
+            logging.error(f"Exception in check_if_ufm_host on ufmapl {self.device_name}\n cmd ran was  = {cmd} .\n Exception was =   {str(e)}" )
 
         logging.debug(f"server : {self.device_name} is  ufm host")
         self.is_ufm_host = True
