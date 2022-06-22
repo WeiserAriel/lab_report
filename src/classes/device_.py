@@ -486,7 +486,7 @@ class Device:
                         logging.error('Exception in removing asci charecters for output of command ' + str(e))
                         return None
             except Exception as e:
-                logging.error('Exception in running command ' + str(e))
+                logging.error(f"Exception in running command {str(e)} , \n command was : {cmd}" )
                 logging.error(f"output =\n\n{output}\n\n ")
 
         elif self.device_type in ['linux_host'] or run_on_global != None:
@@ -501,7 +501,7 @@ class Device:
                 else:
                     return stdout.read().decode('utf-8')
             except Exception as e:
-                logging.error('Excpetion in run command for Linux host : ' + str(e))
+                logging.error(f"Excpetion in run command for Linux host : {str(e)} , command was : {cmd}")
 
     @staticmethod
     def search_in_regex(output, regex):

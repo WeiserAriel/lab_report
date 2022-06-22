@@ -71,7 +71,7 @@ class Apl_Host(Device):
             if output:
                 res = re.match('UFM\s*Running',output)
             else:
-                logging.error(f"the output returns as None in : {__name__}")
+                logging.error(f"the output returns as None in : check_if_ufm_host function")
             if res:
                 self.is_ufm_host = True
                 logging.debug(f"ufm is running on server {self.device_name}")
