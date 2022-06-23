@@ -467,14 +467,21 @@ class Device:
         return filter(lambda x: x in printable, text)
 
     def run_command(self, cmd, remove_asci='no', run_on_global=None, white_chars_removal=None):
+        logging.debug(f"Inside run commannd function for : {self.device_name}" )
         if (self.device_type == 'switch' or self.device_type == 'ufmapl' or self.device_type in ['GEN2','GEN2.5','GEN3','GEN4']  ) and run_on_global == None:
 
             try:
-                logging.debug('Running command for switch or ufmapl :' + str(cmd))
-                output = self.ssh_client.send_command_timing(cmd)
+                try:
+                    logging.debug('Running command for switch or ufmapl :' + str(cmd))
+                    output = self.ssh_client.send_command_timing(cmd)
+                except Exception as e:
+                    logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)}")
                 if output == "":
                     #for some reason when i debug i have to use different function.
-                    output = self.ssh_client.send_command(cmd)
+                    try:
+                        output = self.ssh_client.send_command(cmd)
+                    except Exception as e:
+                        logging.error(f"Exception in self.ssh_client.send_command : {str(e)}")
                 if remove_asci == 'no':
                     return output
                 else:
