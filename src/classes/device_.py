@@ -291,33 +291,36 @@ class Device:
 
 
     def get_ports(self):
-        logging.debug("Running ibstat on : " + self.device_name)
-        if not self.is_tool_installed('ibstat'):
-            ports = ['n/a', 'n/a', 'n/a', 'n/a']
-            return ports
+        try:
+            logging.debug("Running ibstat on : " + self.device_name)
+            if not self.is_tool_installed('ibstat'):
+                ports = ['n/a', 'n/a', 'n/a', 'n/a']
+                return ports
 
-        cmd = 'ibstat | grep \'CA type\''
-        out = self.run_command(cmd)
-        totalPorts = 4
-        i = 0
-        ports = []
-        flag = False
-        if out:
-            list_rows = out.splitlines()
-            #count number of ports:
-            for row in list_rows:
-                if 'CA type' in row:
-                    ports.append(row.split(':')[1])
-                    i += 1
-            for _ in range(totalPorts - i):
-                ports.append('n/a')
+            cmd = 'ibstat | grep \'CA type\''
+            out = self.run_command(cmd)
+            totalPorts = 4
+            i = 0
+            ports = []
+            flag = False
+            if out:
+                list_rows = out.splitlines()
+                #count number of ports:
+                for row in list_rows:
+                    if 'CA type' in row:
+                        ports.append(row.split(':')[1])
+                        i += 1
+                for _ in range(totalPorts - i):
+                    ports.append('n/a')
 
-            logging.debug("found " +str(i) + " ports on " + self.device_name)
-            return ports
-        else:
-            logging.critical("No HCA-s install on : " + self.device_name)
-            ports = ['n/a', 'n/a', 'n/a', 'n/a']
-            return ports
+                logging.debug("found " +str(i) + " ports on " + self.device_name)
+                return ports
+            else:
+                logging.critical("No HCA-s install on : " + self.device_name)
+                ports = ['n/a', 'n/a', 'n/a', 'n/a']
+                return ports
+        except Exception as e:
+            logging.error(f"exception in get_ports function, device : {self.device_name} {str(e)}")
 
 
 
