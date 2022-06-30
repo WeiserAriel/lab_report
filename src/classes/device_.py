@@ -372,7 +372,8 @@ class Device:
                 logging.debug("SSH failed which means no ping to host : " + self.device_name)
                 self.ip_reply = 'No'
             self.ssh_client = ssh_client
-            self.ssh_client.fast_cli = False
+            if self.ssh_client:
+                self.ssh_client.fast_cli = False
             logging.debug("end init_ssh")
         else:
             logging.debug("skip ssh to : " + self.device_name + " because no ping to MGMT")
