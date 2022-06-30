@@ -372,6 +372,7 @@ class Device:
                 logging.debug("SSH failed which means no ping to host : " + self.device_name)
                 self.ip_reply = 'No'
             self.ssh_client = ssh_client
+            self.ssh_client.fast_cli = False
             logging.debug("end init_ssh")
         else:
             logging.debug("skip ssh to : " + self.device_name + " because no ping to MGMT")
@@ -434,6 +435,7 @@ class Device:
             logging.debug(msg="Open SSH Client to to switch/ufmapl :" + str(ip))
             try:
                 client = ConnectHandler(device_type='cisco_ios', host=ip, username=username,password=passowrd)
+
                 logging.getLogger("netmiko").setLevel(logging.WARNING)
             except Exception as ex:
                 logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
@@ -474,12 +476,17 @@ class Device:
                 try:
                     logging.debug('Running command for switch or ufmapl :' + str(cmd))
                     output = self.ssh_client.send_command_timing(cmd)
+                    logging.debug('Running command for switch or ufmapl succusseded!')
                 except Exception as e:
                     logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)}")
+                logging.debug(f"checking if output is empty for : {str(self.device_name)}")
                 if output == "":
+                    logging.debug(f"Yes, output if empty")
                     #for some reason when i debug i have to use different function.
                     try:
+                        logging.debug(f"retry to send command with self.ssh_client.send_command")
                         output = self.ssh_client.send_command(cmd)
+                        logging.debug(f"retry was finished succussfully")
                     except Exception as e:
                         logging.error(f"Exception in self.ssh_client.send_command : {str(e)}")
                 if remove_asci == 'no':
