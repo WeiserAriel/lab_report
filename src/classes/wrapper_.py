@@ -172,6 +172,32 @@ class Wapper():
             return False
 
     @staticmethod
+    def is_virutal_machine(dev, device_name):
+        logging.debug(f"start check if {device_name} is virtual machine")
+        try:
+            try:
+                logging.debug(f"checking if name of the device has only one '-' inside for : {device_name}")
+                num_of_spaces = len(str(device_name.find("-")))
+                if num_of_spaces <= 1:
+                    logging.debug(f"name contains only one space")
+                    return False
+                else:
+                    device_name_short = str.join('-',str(device_name).split("-")[:-1])
+            except Exception as e:
+                logging.error(f"can't convert device name : {device_name_short}. Exception : {str(e)}")
+            cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device_name_short
+            out = dev.run_command(cmd)
+            logging.debug(f"grepping short name fron DHCP run succussfully ")
+            num_of_lines = len(str(out).splitlines())
+            if num_of_lines > 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            logging.error(f"Exception in  check if {device_name} is virtual machine : {str(e)}")
+            return False
+
+    @staticmethod
     def Create_devices_objects(device_list_ip):
         #Create tempory SSH connection to be able to create device list:
         main_device = 'r-build-05'
@@ -236,8 +262,12 @@ class Wapper():
                         logging.debug("device identify as switch : " + device_name)
                         tmp_device = Switch(device_ip, device_name, 'switch',dev,owner,group_name)
                     else:
-                        logging.debug("device identify as linux host : " + device_name)
-                        tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner,group_name)
+                        if Wapper.is_virutal_machine(dev,device_name):
+                            logging.debug("device identify as linux host : " + device_name)
+                            tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner,group_name)
+                        else:
+                            logging.debug("device identify as virtual machine: " + device_name)
+                            tmp_device = Linux_Host(device_ip, device_name, 'virtual machine', dev, owner, group_name)
                     logging.debug("append deivice after creation to device list : " + device_name)
 
                     device_list.append(tmp_device)

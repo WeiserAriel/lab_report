@@ -418,7 +418,7 @@ class Device:
 
     def SSHConnect(self, ip, username, passowrd):
         #Checking which type of connection needed ( Switch / UFMAPL / Linux Host
-        if self.device_type == 'linux_host':
+        if self.device_type in ['linux_host','virtual machine']:
             client = paramiko.SSHClient()
             logging.debug(msg="Open SSH Client to to linux host :" + str(ip) +"(" + self.device_name + ')' )
             try:
@@ -507,8 +507,9 @@ class Device:
                 logging.error(f"Exception in running command {str(e)} , \n command was : {cmd}" )
                 logging.error(f"output =\n\n{output}\n\n ")
 
-        elif self.device_type in ['linux_host'] or run_on_global != None:
+        elif self.device_type in ['linux_host', 'virtual machine'] or run_on_global != None:
             try:
+                logging.debug(f"run command - device is Linux machine or Virtual host {self.device_name}")
                 if run_on_global:
                     stdin, stdout, stderr = Device.global_deivce_obj.ssh_client.exec_command(cmd)
                 else:
@@ -518,6 +519,7 @@ class Device:
                     return stdout.read().decode('utf-8')
                 else:
                     return stdout.read().decode('utf-8')
+                logging.debug(f"run command - device is Linux machine or Virtual host {self.device_name} is done")
             except Exception as e:
                 logging.error(f"Excpetion in run command for Linux host : {str(e)} , command was : {cmd}")
 
