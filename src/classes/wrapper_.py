@@ -177,7 +177,7 @@ class Wapper():
         try:
             try:
                 logging.debug(f"checking if name of the device has only one '-' inside for : {device_name}")
-                num_of_spaces = len(str(device_name.find("-")))
+                num_of_spaces = device_name.count("-")
                 if num_of_spaces <= 1:
                     logging.debug(f"name contains only one space")
                     return False
@@ -263,11 +263,11 @@ class Wapper():
                         tmp_device = Switch(device_ip, device_name, 'switch',dev,owner,group_name)
                     else:
                         if Wapper.is_virutal_machine(dev,device_name):
-                            logging.debug("device identify as linux host : " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name,'linux_host', dev,owner,group_name)
+                            logging.debug("device identify as virtual machine : " + device_name)
+                            tmp_device = Linux_Host(device_ip, device_name,'virtual machine', dev,owner,group_name)
                         else:
-                            logging.debug("device identify as virtual machine: " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name, 'virtual machine', dev, owner, group_name)
+                            logging.debug("device identify as linux_host: " + device_name)
+                            tmp_device = Linux_Host(device_ip, device_name, 'linux_host', dev, owner, group_name)
                     logging.debug("append deivice after creation to device list : " + device_name)
 
                     device_list.append(tmp_device)
