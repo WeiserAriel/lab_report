@@ -227,7 +227,7 @@ class Wapper():
                     for row in rows:
                         regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
                         found = Device.search_in_regex(row, regex)
-                        if found and (row.split('; ')[2] == device):
+                        if found and (row.split('; ')[2].lower() == device.lower()):
                             device_name = str(row.split(';')[2]).replace(" ","")
                             device_ip = str(row.split(';')[0]).replace(" ","")
                             break

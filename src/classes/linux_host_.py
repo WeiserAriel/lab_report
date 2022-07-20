@@ -135,7 +135,10 @@ class Linux_Host(Device):
                 logging.debug('tool does not install on : ' +self.device_name)
             else:
                 out = super().run_command(cmd)
-                super().dump_file('lshca', out, Constants.root_hcas)
+                if out:
+                    super().dump_file('lshca', out, Constants.root_hcas)
+                else:
+                    logging.critical(f"lshca return empty for : {str(self.device_name)}")
 
         except Exception as e:
             logging.error('Exception in lshca function : ' + str(e))
