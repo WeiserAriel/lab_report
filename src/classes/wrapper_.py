@@ -188,8 +188,14 @@ class Wapper():
             cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device_name_short
             out = dev.run_command(cmd)
             logging.debug(f"grepping short name fron DHCP run succussfully ")
-            num_of_lines = len(str(out).splitlines())
-            if num_of_lines > 1:
+            out_lines = str(out).splitlines()
+            counter = 0
+            regex = device_name_short + r"-\d\d\d"
+            matches = re.findall(regex,out)
+            if not matches:
+                return False
+
+            if len(matches) > 1:
                 return True
             else:
                 return False
