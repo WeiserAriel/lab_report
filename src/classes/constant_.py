@@ -18,6 +18,7 @@ class Constants():
     root_servers = root_folder + os.sep + 'servers' + os.sep
     root_cables = root_folder + os.sep + 'cables' + os.sep
     root_ufm_versions = root_folder + os.sep + 'ufm_versions' + os.sep
+    root_gpu_versions = root_folder + os.sep + 'gpu_versions' + os.sep
     ignore_devices = ['smg-ib-sw009','smg-ib-sw010','r-hpc-mg14','smg-ib-olg001-mgmt01','smg-ib-sim001','smg-ib-apl007-gen2','smg-ib-apl012-gen2']
 
 

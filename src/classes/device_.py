@@ -38,7 +38,20 @@ class Device:
 
         logging.debug("finish building device class for :" + device_name)
 
-
+    def save_gpu_version(self, gpu_dic):
+        logging.debug(f"saving gpu version into json file")
+        try:
+            gpu_dic["owner_name"] = self.owner
+            gpu_dic["device_name"] = self.device_name
+            dir = f"{Constants.root_gpu_versions}{self.device_name}"
+            filename = f"{dir}{os.sep}gpu.json"
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            with open(filename, 'w') as fp:
+                json.dump(gpu_dic, fp)
+        except Exception as e:
+            logging.error(f"Exception in save gpu version for {self.device_name} : {str(e)}")
+        logging.debug(f"finish dumpping gpu version for : {self.device_name}")
     def save_ufm_version(self):
         if self.is_ufm_host:
             logging.debug(f"saving ufm version into json file")

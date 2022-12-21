@@ -3,7 +3,7 @@ import re
 from src.classes.Cables_ import Cables
 from src.classes.constant_ import Constants
 from src.classes.device_ import Device
-
+import xmltodict
 import logging
 
 
@@ -55,6 +55,7 @@ class Linux_Host(Device):
             self.lshca()
             self.getServerModelandType()
             self.get_kernel_version()
+            self.check_if_gpu_exist()
             if self.check_if_ufm_host():
                 self.Cables_obj = Cables(self.device_name,self.owner)
                 self.save_ufm_version()
@@ -83,6 +84,38 @@ class Linux_Host(Device):
         self.is_ufm_host = True
         self.get_ufm_version()
         return  True
+
+    def check_if_gpu_exist(self):
+        try:
+            logging.debug(f"check if {self.device_name} has GPU:")
+            cmd = f"nvidia-smi -q"
+            out = self.run_command(cmd)
+            if 'no nvidia-smi' in out or not out or 'command not found' in out:
+                logging.debug(f" {self.device_name} has no GPUs installed :")
+            elif f'''NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver''' in out:
+                logging.critical(f'Nvidia latest driver is not installed on {self.device_name}. Make sure to update the driver')
+            else:
+                logging.debug(f" {self.device_name} has  GPUs installed :")
+                try:
+                    cmd = f"nvidia-smi -q -x"
+                    out = super().run_command(cmd)
+                    logging.debug(f"command has run succussfully : {cmd} on {self.device_name}")
+                    data_dict = self.xml_to_json(out_xml=out)
+                    super().save_gpu_version(data_dict)
+                except Exception as e:
+                    logging.error(f"Exception while running {cmd} : {str(e)}")
+        except Exception as e:
+            logging.error(f"Exception occured in get ufm version for {self.device_name}: {str(e)}")
+
+    def xml_to_json(self,out_xml):
+        logging.debug(f"convert xml file into dictionary")
+        try:
+            my_dict = xmltodict.parse(out_xml)
+            logging.debug(f"finished convert xml file into dictionary")
+            return my_dict
+        except Exception as e:
+            logging.error(f"Exception received in xml_to_json on device {self.device_name}")
+
 
     def get_ufm_version(self):
         try:
