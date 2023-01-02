@@ -90,7 +90,7 @@ class Linux_Host(Device):
             logging.debug(f"check if {self.device_name} has GPU:")
             cmd = f"nvidia-smi -q"
             out = self.run_command(cmd)
-            if 'no nvidia-smi' in out or not out or 'command not found' in out:
+            if 'no nvidia-smi' in out or not out or 'command not found' in out or 'but can be installed' in out:
                 logging.debug(f" {self.device_name} has no GPUs installed :")
             elif f'''NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver''' in out:
                 logging.critical(f'Nvidia latest driver is not installed on {self.device_name}. Make sure to update the driver')
