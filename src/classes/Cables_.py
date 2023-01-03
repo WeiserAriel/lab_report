@@ -45,7 +45,10 @@ class Cables():
             else:
                 logging.critical(f"request of getting cable request ended with status code : {str(res.status_code)} altough ufm is running ")
         except Exception as e:
-            logging.error('Exception was received in send cables request ' + str(e))
+            if str(type(e)) == "<class 'requests.exceptions.SSLError'>":
+                logging.critical('SSLError Exception was received in send cables request... this might be expected  ' + str(e))
+            else:
+                logging.error('Exception was received in send cables request ' + str(e))
 
     def save_json(self, dict):
         dir = Constants.root_cables
