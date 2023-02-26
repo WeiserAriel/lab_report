@@ -34,10 +34,54 @@ class Device:
         self.get_all_device_properties()
         self.save_global_obj()
         self.is_ufm_host = False
+        self.is_ufm_host_is_running = False
         self.ufm_version = None
+        self.master = None
+        self.slave = None
+        self.ufm_mode = None
+        self.ufm_ha_ip_type = 'IPV4'
+
 
         logging.debug("finish building device class for :" + device_name)
 
+    def parse_ufm_mode_output(self,output):
+        try:
+            logging.debug(f'start parsing the output of : {self.device_name}')
+            #lines = output.splitlines()
+            all_regax = [
+                'ha_master_node=(.*)',
+                'ha_standby_node=(.*)',
+                'ha_ip_type=(.*)'
+            ]
+            for reg in all_regax:
+                o = re.findall(reg,output)
+                if o:
+                    if reg == all_regax[0]:
+                        self.master = o[0].split('.')[0]
+                    elif reg == all_regax[1]:
+                        self.slave =o[0].split('.')[0]
+                    else:
+                        #all_reg[2]
+                        self.ufm_ha_ip_type = o[0].split('.')[0]
+                else:
+                    logging.error(f'regex was not found for : {str(reg)} in device : {str(self.device_name)}')
+
+        except Exception as e:
+            logging.error(f'Exception in parsing ufm mode output on : {self.device_name} : {str(e)}')
+
+        self.ufm_mode = 'HA'
+        logging.debug(f'parsing ufm master and slave data finished succussfully for : {self.device_name}')
+    def get_info_of_ufm_mode(self):
+        logging.debug(f'retreive information of ufm mode on : {self.device_name}')
+        file =f'/opt/ufm/ufm-enterprise/files/ufm_ha/ha_settings'
+        try:
+            output = self.run_command(cmd=f'cat {file}',remove_asci=True)
+            if 'standby' in output:
+                self.parse_ufm_mode_output(output)
+            else:
+                self.ufm_mode = 'SA'
+        except Exception as e:
+            logging.error(f'Exception received on get ufm mode for : {self.device_name} : {str(e)}')
     def save_gpu_version(self, gpu_dic):
         logging.debug(f"saving gpu version into json file")
         try:
@@ -52,7 +96,7 @@ class Device:
         except Exception as e:
             logging.error(f"Exception in save gpu version for {self.device_name} : {str(e)}")
         logging.debug(f"finish dumpping gpu version for : {self.device_name}")
-    def save_ufm_version(self):
+    def save_ufm_data(self):
         if self.is_ufm_host:
             logging.debug(f"saving ufm version into json file")
             try:
@@ -60,9 +104,13 @@ class Device:
                 dic["owner_name"] = self.owner
                 dic["device_name"] = self.device_name
                 dic["ufm_version"] = self.ufm_version
+                dic["ufm_type"] = self.ufm_ha_ip_type
+                dic["ufm_master"] = self.master
+                dic["ufm_slave"] = self.slave
+                dic["ufm_mode"] = self.ufm_mode
 
                 dir =f"{Constants.root_ufm_versions}{self.device_name}"
-                filename = f"{dir}{os.sep}ufm_version.json"
+                filename = f"{dir}{os.sep}ufm_data.json"
                 if not os.path.exists(dir):
                     os.makedirs(dir)
                 with open(filename, 'w') as fp:
@@ -482,13 +530,16 @@ class Device:
         printable = set(string.printable)
         return filter(lambda x: x in printable, text)
 
-    def run_command(self, cmd, remove_asci='no', run_on_global=None, white_chars_removal=None):
+    def run_command(self, cmd, remove_asci='no', run_on_global=None, white_chars_removal=None,docker=None):
         logging.debug(f"Inside run commannd function for : {self.device_name}" )
         if (self.device_type == 'switch' or self.device_type == 'ufmapl' or self.device_type in ['GEN2','GEN2.5','GEN3','GEN4']  ) and run_on_global == None:
 
             try:
                 try:
                     logging.debug('Running command for switch or ufmapl :' + str(cmd))
+                    if docker:
+                        logging.debug(f"changing cmd to run on docker : {docker}")
+                        cmd = f"docker exec -it {docker} {cmd}"
                     output = self.ssh_client.send_command_timing(cmd)
                     logging.debug('Running command for switch or ufmapl succusseded!')
                 except Exception as e:

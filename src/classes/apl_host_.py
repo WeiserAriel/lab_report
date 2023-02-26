@@ -27,8 +27,8 @@ class Apl_Host(Device):
 
     # start collecting information
 
-    def save_ufm_version(self):
-        super().save_ufm_version()
+    def save_ufm_data(self):
+        super().save_ufm_data()
 
     def get_all_properties(self, has_shell):
         self.get_ilo_ip()
@@ -46,8 +46,17 @@ class Apl_Host(Device):
             self.get_os_version()
             self.get_hw_address()
             if self.check_if_ufm_host():
-                self.Cables = Cables(self.device_name)
-                self.save_ufm_version()
+                self.get_info_of_ufm_mode()
+                self.save_ufm_data()
+                running = self.check_if_ufm_host_is_running()
+                if running:
+                    self.Cables = Cables(self.device_name)
+
+
+    def check_if_ufm_host(self):
+        logging.debug(f'assuming that all ufm appliance are ufm hosts : {self.device_name}')
+        self.is_ufm_host = True
+        return True
 
     def get_ufm_version(self):
         if self.is_ufm_host:
@@ -64,7 +73,7 @@ class Apl_Host(Device):
             except Exception as e:
                 logging.error(f"Exeception occured in get version for {self.device_name}: {str(e)}")
 
-    def check_if_ufm_host(self):
+    def check_if_ufm_host_is_running(self):
         try:
             cmd = 'show ufm status'
             logging.debug(f"checking if ufmapl is running on server {self.device_name}")
@@ -74,7 +83,7 @@ class Apl_Host(Device):
                     res = re.match('UFM\s*Running',output)
                 except Exception as e:
                     logging.error(f"couldn't find any match of regex in check_if_ufm_host in server : {self.device_name}\n res = {str(res)}")
-                    self.is_ufm_host = False
+                    self.is_ufm_host_is_running = False
                     return False
             else:
                 logging.error(f"the output returns as None in : check_if_ufm_host function")

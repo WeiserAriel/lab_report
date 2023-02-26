@@ -1,4 +1,5 @@
 import re
+import docker
 
 from src.classes.Cables_ import Cables
 from src.classes.constant_ import Constants
@@ -24,6 +25,7 @@ class Linux_Host(Device):
         self.os_version = 'n/a'
         self.dmidecode = 'n/a'
         self.kernel = 'n/a'
+        self.ufm_chassis_health_docker_id = 'n/a'
         #start collecting information
         self.get_ilo_ip()
         self.check_ilo_works()
@@ -57,33 +59,66 @@ class Linux_Host(Device):
             self.get_kernel_version()
             self.check_if_gpu_exist()
             if self.check_if_ufm_host():
-                self.Cables_obj = Cables(self.device_name,self.owner)
-                self.save_ufm_version()
+                self.get_info_of_ufm_mode()
+                self.save_ufm_data()
+                running = self.check_if_ufm_is_running()
+                if running:
+                    self.Cables_obj = Cables(self.device_name,self.owner)
 
-    def save_ufm_version(self):
-        super().save_ufm_version()
+
+    def save_ufm_data(self):
+        super().save_ufm_data()
+
+    def get_list_of_dockers(self):
+
+        try:
+            logging.debug(f"Trying to get container id of ufm-chassis-health docker on : {self.device_name}")
+            cmd =r"""sudo docker ps --filter "mellanox/ufm-enterprise --format "{{.ID}}"
+            """
+            output = str(self.run_command(cmd)).splitlines()[-1]
+            if output:
+                self.ufm_enterprise_docker_id = output
+        except Exception as e:
+            logging.error(f'Exception was catched in get list on docker for {self.device_name} : {str(e)}')
 
     def check_if_ufm_host(self):
         try:
-            proccess = ['opensm','ModelMain.pyc']
-            logging.debug(f"checking if {self.device_name} has ufm running ")
-            for p in proccess:
-                cmd = f"ps -ef | grep {p}"
-                output = self.run_command(cmd=cmd,remove_asci='yes')
-                if re.findall(f"\Sopt\S.*\S{p}", output):
-                    logging.debug(f"server : {self.device_name} is  running {p} ")
-                else:
-                    logging.debug(f"server : {self.device_name} is  not running {p}")
-                    self.is_ufm_host = False
-                    return False
+            logging.debug(f'make sure one of the file exist in the host to determine ufm host')
+            files = [f'/opt/ufm/version/release', \
+                    f'/opt/ufm/chassis_health/ch-release', \
+                    f'/opt/ha_data/ufm-enterprise/files/ufm_version']
 
+            for f in files:
+                cmd = f'ls {f}'
+                output = self.run_command(cmd)
+                if not 'No such' in output:
+                    self.is_ufm_host = True
+                    self.get_ufm_version()
+                    return True
+            else:
+                self.is_ufm_host = False
+                return False
         except Exception as e:
-            logging.error('Exception in check_if_ufm_host : ' + str(e))
+            logging.error(f'Execption in check if ufm host appears on {self.device_name} : {str(e)}')
 
-        logging.debug(f"server : {self.device_name} is  ufm host")
-        self.is_ufm_host = True
-        self.get_ufm_version()
-        return  True
+    def check_if_ufm_is_running(self):
+        proccess = ['opensm','ModelMain.pyc']
+        logging.debug(f"checking if {self.device_name} has ufm running ")
+        for p in proccess:
+
+            cmd = f"ps -ef | grep {p}"
+            output = self.run_command(cmd=cmd, remove_asci='yes', )
+            if re.findall(f"\Sopt\S.*\S{p}", output):
+                logging.debug(f"server : {self.device_name} is  running {p} ")
+            else:
+                logging.debug(f"server : {self.device_name} is  not running {p}")
+                self.is_ufm_host_is_running = False
+                return False
+
+        logging.debug(f'ufm is running on : {self.device_name}')
+        self.is_ufm_host_is_running = True
+        return True
+
 
     def check_if_gpu_exist(self):
         try:
@@ -119,8 +154,24 @@ class Linux_Host(Device):
 
     def get_ufm_version(self):
         try:
-            cmd = f" cat /opt/ufm/version/release "
-            out = super().run_command(cmd)
+            if self.device_type == 'GEN3' or self.device_type == 'GEN4':
+                if self.device_type == 'GEN3':
+                    files = [f'/opt/ufm/chassis_health/ch-release','/opt/ha_data/ufm-enterprise/files/ufm_version']
+                else:
+                    #GEN4
+                    files = [f'/opt/ha_data/ufm-enterprise/files/ufm_version']
+                final_version =''
+                for file_path in files:
+                    cmd = f'sudo cat {file_path}'
+                    out = super().run_command(cmd)
+                    final_version += out + ' - '
+                final_version = final_version[:-2]
+                self.ufm_version = final_version
+                logging.debug(f"found ufm version for {self.device_name} : {self.ufm_version}")
+                return
+            else:
+                cmd = f" cat /opt/ufm/version/release "
+                out = super().run_command(cmd)
             if out:
                 self.ufm_version = out
                 self.ufm_version = str(self.ufm_version.replace("build", '.')).replace(" ", "")
