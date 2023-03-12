@@ -40,46 +40,67 @@ class Device:
         self.slave = None
         self.ufm_mode = None
         self.ufm_ha_ip_type = 'IPV4'
+        self.username = username
+        self.password = password
 
 
         logging.debug("finish building device class for :" + device_name)
 
     def parse_ufm_mode_output(self,output):
-        try:
-            logging.debug(f'start parsing the output of : {self.device_name}')
-            #lines = output.splitlines()
-            all_regax = [
-                'ha_master_node=(.*)',
-                'ha_standby_node=(.*)',
-                'ha_ip_type=(.*)'
-            ]
-            for reg in all_regax:
-                o = re.findall(reg,output)
-                if o:
-                    if reg == all_regax[0]:
-                        self.master = o[0].split('.')[0]
-                    elif reg == all_regax[1]:
-                        self.slave =o[0].split('.')[0]
-                    else:
-                        #all_reg[2]
-                        self.ufm_ha_ip_type = o[0].split('.')[0]
-                else:
-                    logging.error(f'regex was not found for : {str(reg)} in device : {str(self.device_name)}')
 
+        if self.ssh_client.find_prompt() == '>':
+            logging.debug(f'need to recreate shell since we entered \'>\' mode in : {self.device_name}')
+            try:
+                self.SSHConnect(self.ip,self.username,self.passwor)
+            except Exception as e:
+                logging.error(f'Exception in recreation of SSH for : {self.device_name}')
+        logging.debug(f'found ufm in HA : {self.device_name}')
+        self.ufm_mode = 'HA'
+        cmds = [r'''ufm_ha_cluster status  | grep Masters''', \
+                r'''ufm_ha_cluster status  | grep Slaves''']
+        try:
+            for cmd in cmds:
+                out = self.run_command(cmd)
+                if 'Master' in cmd:
+                    self.master = str(out).split('[')[-1].split(']')[0].replace(' ','')
+                else:
+                    #slave
+                    self.slave = str(out).split('[')[-1].split(']')[0].replace(' ','')
+            logging.debug(f'start parsing the output of : {self.device_name}')
         except Exception as e:
             logging.error(f'Exception in parsing ufm mode output on : {self.device_name} : {str(e)}')
 
-        self.ufm_mode = 'HA'
+        self.check_ufm_ha_ipv()
         logging.debug(f'parsing ufm master and slave data finished succussfully for : {self.device_name}')
+    def check_ufm_ha_ipv(self):
+        logging.debug(f'checking ufm IPV4 or IPV6')
+        if self.device_type == 'GEN4':
+            file = f"cat /opt/ha_data/ufm-enterprise/files/ufm_ha/ha_settings | grep ha_ip_type= | cut -d= -f2''"
+        else:
+            file = f'cat /opt/ufm/files/ufm_ha/ha_settings | grep ha_ip_type= | cut -d= -f2'
+        if self.device_name == self.master:
+            logging.debug(f'current host is the UFM master which means he has the file : {str(file)} : {self.device_name}')
+            self.ufm_ha_ip_type = self.run_command(f'sudo {file}')
+            logging.debug(f'found ha_ip_type : {self.ufm_ha_ip_type} for : {self.device_name}')
+        else:
+            #ssh user@remotehost 'pwd'
+            try:
+                logging.debug(f'trying to run command from master to slave via ssh : {self.device_name}')
+                cmd = f'ssh root@{self.master} {file}'
+                out = self.run_command(cmd)
+                self.ufm_ha_ip_type = str(out).replace('\n','')
+            except Exception as e:
+                logging.error(f'Exception in running command from slave to master : {self.device_name} : {str(e)}')
     def get_info_of_ufm_mode(self):
         logging.debug(f'retreive information of ufm mode on : {self.device_name}')
-        file =f'/opt/ufm/ufm-enterprise/files/ufm_ha/ha_settings'
+        #files =[f'/opt/ufm/ufm-enterprise/files/ufm_ha/ha_settings',f'/opt/ufm/files/ufm_ha/ha_settings']
+        cmd = f'ufm_ha_cluster status'
         try:
-            output = self.run_command(cmd=f'cat {file}',remove_asci=True)
-            if 'standby' in output:
-                self.parse_ufm_mode_output(output)
-            else:
+            output = self.run_command(cmd)
+            if 'command not found' in output or 'cluster is not currently running on this node' in output or 'DRBD resource is not configured' in output:
                 self.ufm_mode = 'SA'
+            else:
+                self.parse_ufm_mode_output(output)
         except Exception as e:
             logging.error(f'Exception received on get ufm mode for : {self.device_name} : {str(e)}')
     def save_gpu_version(self, gpu_dic):
@@ -511,7 +532,7 @@ class Device:
         shell =None
         for i in range(3):
             try:
-                shell = clinet.invoke_shell()
+                shell = client.invoke_shell()
                 shell.settimeout(10)
                 shell.recv(1024)
                 # time.sleep(10)
@@ -544,13 +565,13 @@ class Device:
                     logging.debug('Running command for switch or ufmapl succusseded!')
                 except Exception as e:
                     logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)}")
-                logging.debug(f"checking if output is empty for : {str(self.device_name)}")
+                    logging.debug(f"checking if output is empty for : {str(self.device_name)}")
                 if output == "":
                     logging.debug(f"Yes, output if empty")
                     #for some reason when i debug i have to use different function.
                     try:
                         logging.debug(f"retry to send command with self.ssh_client.send_command")
-                        output = self.ssh_client.send_command(cmd)
+                        output = self.ssh_client.send_command(cmd,read_timeout=30)
                         logging.debug(f"retry was finished succussfully")
                     except Exception as e:
                         logging.error(f"Exception in self.ssh_client.send_command : {str(e)}")

@@ -39,20 +39,73 @@ class Apl_Host(Device):
             self.get_memory()
             self.get_ofed()
             self.get_dmidecode()
+            if self.check_if_ufm_host():
+                self.get_info_of_ufm_mode()
+                self.get_ufm_version()
+                self.check_if_ufm_host_is_running()
+                self.save_ufm_data()
+                if self.is_ufm_host_is_running and  \
+                        self.device_type != 'GEN2' and self.device_type != 'GEN3' and self.device_type != 'GEN4':
+                    self.Cables = Cables(self.device_name)
+
 
             # Some of the commands need to run after 'cli':
             self.change_to_cli()
             self.set_enable_configure_terminal()
             self.get_os_version()
             self.get_hw_address()
-            if self.check_if_ufm_host():
-                self.get_info_of_ufm_mode()
-                self.save_ufm_data()
-                running = self.check_if_ufm_host_is_running()
-                if running:
-                    self.Cables = Cables(self.device_name)
 
 
+    def find_ip_address(self, input_string):
+        try:
+            #ipv4_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+            ipv6_pattern = r'(?:(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){1,6}(?:(?:[0-9A-Fa-f]){1,4}:?){0,2})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){7})(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){6})(?:[0-9A-Fa-f]){1,4}:(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){5})(?:(?:[0-9A-Fa-f]){1,4}:){1,2}(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){4})(?:(?:[0-9A-Fa-f]){1,4}:){1,3}(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){3})(?:(?:[0-9A-Fa-f]){1,4}:){1,4}(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){2})(?:(?:[0-9A-Fa-f]){1,4}:){1,5}(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:(?:[0-9A-Fa-f]){1,4}:){1})(?:(?:[0-9A-Fa-f]){1,4}:){1,6}(?:[0-9A-Fa-f]){1,4})|(?:::(?:(?:(?:[0-9A-Fa-f]){1,4}:){1,6}(?:[0-9A-Fa-f]){1,4})|(?:(?:(?:[0-9A-Fa-f]){1,4}:){1,7}:)))(?:%[0-9A-Za-z]{1,})?)\b'
+
+            #ipv4_match = re.search(ipv4_pattern, input_string)
+            ipv6_match = re.search(ipv6_pattern, input_string)
+            logging.debug(f'Trying to see if we have any IPV6 in ufm status for : {self.device_name}')
+            if ipv6_match:
+                logging.debug(f'UFM mode is IPV6 : {str(ipv6_match[0])}')
+                self.ufm_ha_ip_type = 'IPV6'
+            else:
+                logging.debug(f'UFM mode is IPV4')
+                self.ufm_ha_ip_type = 'IPV4'
+        except Exception as e:
+            logging.error("Exception occurred while finding IP address: " + str(e))
+
+    def get_info_of_ufm_mode(self):
+        logging.debug(f'starting get info of ufm mode : {str(self.device_name)}')
+        if 'GEN2' in self.device_type:
+            logging.debug(f'change back to cli')
+            try:
+                self.change_to_cli()
+                cmd = 'show ufm status'
+                out = self.run_command(cmd)
+                self.change_to_shell()
+                if 'High Availability Status' in out:
+                    logging.debug(f'Running in HA mode : {str(self.device_name)}')
+                    self.parse_ufm_mode_output(out)
+                    self.ufm_mode = 'HA'
+                else:
+                    logging.debug(f'Host running in SA mode : {str(self.device_name)}')
+                    self.ufm_mode = 'SA'
+
+            except Exception as e:
+                logging.error(f'Exception received in check ufm status : {self.device_name} : {str(e)}')
+        else:
+            #GEN3/4 are treated differently.
+            super().get_info_of_ufm_mode()
+
+    def parse_ufm_mode_output(self,output):
+        try:
+            logging.debug(f'Trying to parse ufm mode to : {self.device_name}')
+            regexs= ['Local.*\(','Peer.*\(']
+            self.master = re.search(regexs[0], output)[0].split()[2]
+            self.slave= re.search(regexs[1], output)[0].split()[2]
+            self.find_ip_address(output)
+        except Exception as e:
+            logging.error(f'Exception retrived in parse ufm mode in {self.device_name} : {str(e)}')
+        logging.debug(f'finish parsing ufm mode on : {self.device_name}')
     def check_if_ufm_host(self):
         logging.debug(f'assuming that all ufm appliance are ufm hosts : {self.device_name}')
         self.is_ufm_host = True
@@ -61,15 +114,14 @@ class Apl_Host(Device):
     def get_ufm_version(self):
         if self.is_ufm_host:
             logging.debug(f"get ufm version for {self.device_name}")
-            cmd = "show version"
-            output = self.run_command('cmd', remove_asci='yes')
+            cmd = 'show version'
+            output = self.run_command(cmd, remove_asci='yes')
             try:
-                res = re.match('UFM\s*Running', output)
+                res = re.findall('Product release\W*(.*)', output)[0]
                 if res:
                     self.ufm_version = res
-                    return True
                 else:
-                    return False
+                    logging.error(f'coudnt get ufm version for : {self.device_name}')
             except Exception as e:
                 logging.error(f"Exeception occured in get version for {self.device_name}: {str(e)}")
 
@@ -84,25 +136,23 @@ class Apl_Host(Device):
                 except Exception as e:
                     logging.error(f"couldn't find any match of regex in check_if_ufm_host in server : {self.device_name}\n res = {str(res)}")
                     self.is_ufm_host_is_running = False
-                    return False
             else:
                 logging.error(f"the output returns as None in : check_if_ufm_host function")
+
             if res:
                 self.is_ufm_host = True
                 logging.debug(f"ufm is running on server {self.device_name}")
-                self.ufm_version = self.get_ufm_version()
-                return  True
+                self.is_ufm_host_is_running =True
             else:
-                self.is_ufm_host = False
+                self.is_ufm_host = True
                 logging.debug(f"ufm isn't running on server {self.device_name}")
-                return  False
 
         except Exception as e:
             logging.error(f"Exception in check_if_ufm_host on ufmapl {self.device_name}\n cmd ran was  = {cmd} .\n Exception was =   {str(e)}" )
 
         logging.debug(f"server : {self.device_name} is  ufm host")
         self.is_ufm_host = True
-        self.ufm_version = self.get_ufm_version()
+
 
     def change_to_cli(self):
         logging.debug("Changing to cli mode in : " + self.device_name )
@@ -164,7 +214,7 @@ class Apl_Host(Device):
     def confiure_appliance_license(self):
         logging.debug("start to confiure license to " + self.device_name)
         mac = self.hw_address
-        cmd = '/builds2/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac
+        cmd = '/qa/qa/arielwe/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac
         license = self.run_command(cmd,run_on_global='Yes')
 
         
@@ -185,7 +235,9 @@ class Apl_Host(Device):
         logging.debug("Change to shell mode in : " + self.device_name)
         cmd = '_shell'
         out = self.run_command(cmd)
-        if 'admin' in out:
+        #TBD - some bug here ... out doesn't contains 'admin' in the prompt. i'm using find_prompt instead.
+        current_prompt = self.ssh_client.find_prompt()
+        if 'admin' in current_prompt:
             logging.debug("change to shell mode successfully in : " + self.device_name)
             return True
         else:

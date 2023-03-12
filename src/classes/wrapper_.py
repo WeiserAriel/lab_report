@@ -206,8 +206,8 @@ class Wapper():
     @staticmethod
     def Create_devices_objects(device_list_ip):
         #Create tempory SSH connection to be able to create device list:
-        main_device = 'r-build-05'
-        main_device_ip = '10.209.36.54'
+        main_device = 'smg-ib-svr030'
+        main_device_ip = '10.213.31.20'
         logging.debug("connecting to " + main_device+ " to create device list")
         try:
             dev = Device(main_device_ip, main_device,'linux_host' ,'root', '3tango',None,'Nobody','Nobody')

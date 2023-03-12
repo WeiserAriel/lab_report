@@ -61,8 +61,9 @@ class Linux_Host(Device):
             if self.check_if_ufm_host():
                 self.get_info_of_ufm_mode()
                 self.save_ufm_data()
-                running = self.check_if_ufm_is_running()
-                if running:
+                self.check_if_ufm_is_running()
+                if self.check_if_ufm_is_running and \
+                        self.device_type != 'GEN2' and self.device_type != 'GEN3' and self.device_type != 'GEN4':
                     self.Cables_obj = Cables(self.device_name,self.owner)
 
 
@@ -91,11 +92,13 @@ class Linux_Host(Device):
             for f in files:
                 cmd = f'ls {f}'
                 output = self.run_command(cmd)
-                if not 'No such' in output:
+                if not 'No such' in output and output != "":
+                    logging.debug(f'{self.device_name} is ufm host')
                     self.is_ufm_host = True
                     self.get_ufm_version()
                     return True
             else:
+                logging.debug(f'{self.device_name} is not ufm host')
                 self.is_ufm_host = False
                 return False
         except Exception as e:
@@ -113,11 +116,11 @@ class Linux_Host(Device):
             else:
                 logging.debug(f"server : {self.device_name} is  not running {p}")
                 self.is_ufm_host_is_running = False
-                return False
+                return
 
         logging.debug(f'ufm is running on : {self.device_name}')
         self.is_ufm_host_is_running = True
-        return True
+
 
 
     def check_if_gpu_exist(self):
@@ -132,16 +135,30 @@ class Linux_Host(Device):
             else:
                 logging.debug(f" {self.device_name} has  GPUs installed :")
                 try:
-                    cmd = f"nvidia-smi -q -x"
-                    out = super().run_command(cmd)
+                    #cmd = f"nvidia-smi -q -x"
+                    cmd = f"nvidia-smi --query-gpu=gpu_name,count --format=csv | uniq  | tail -n +2"
+                    out_csv = super().run_command(cmd)
                     logging.debug(f"command has run succussfully : {cmd} on {self.device_name}")
-                    data_dict = self.xml_to_json(out_xml=out)
+                    data_dict = Linux_Host.parse_csv_to_json(out_csv)
+                    #data_dict = self.xml_to_json(out_xml=out)
                     super().save_gpu_version(data_dict)
                 except Exception as e:
                     logging.error(f"Exception while running {cmd} : {str(e)}")
         except Exception as e:
             logging.error(f"Exception occured in get ufm version for {self.device_name}: {str(e)}")
 
+    @staticmethod
+    def parse_csv_to_json(out_csv):
+        logging.debug(f'trying to parse csv to json')
+        try:
+            dict = {}
+            lines = str(out_csv).split(',')
+            dict['GPU_Name'] = lines[0]
+            dict['GPU_Count'] = lines[1]
+            logging.debug(f'parsing csv to json finished succussfully')
+            return dict
+        except Exception as e:
+            logging.error(f'Exception receivced in parsing csv to json : {str(e)}')
     def xml_to_json(self,out_xml):
         logging.debug(f"convert xml file into dictionary")
         try:
@@ -159,11 +176,16 @@ class Linux_Host(Device):
                     files = [f'/opt/ufm/chassis_health/ch-release','/opt/ha_data/ufm-enterprise/files/ufm_version']
                 else:
                     #GEN4
-                    files = [f'/opt/ha_data/ufm-enterprise/files/ufm_version']
+                    files = [f'/opt/ha_data/ufm-enterprise/files/ufm_version' \
+                        , r"""/etc/ufm-release | grep -oP '(?<=UFM_CYBERAI_APPLIANCE=)[0-9]+\.[0-9]+\.[0-9]+-[0-9]+' | cut -d'=' -f2"""]
                 final_version =''
                 for file_path in files:
                     cmd = f'sudo cat {file_path}'
                     out = super().run_command(cmd)
+                    if 'No such file or directory' in out:
+                        self.ufm_version = 'Not Installed'
+                        logging.debug(f'UFM is not installed on : {self.device_name}')
+                        return
                     final_version += out + ' - '
                 final_version = final_version[:-2]
                 self.ufm_version = final_version
