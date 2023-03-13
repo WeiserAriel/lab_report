@@ -81,7 +81,6 @@ class Apl_Host(Device):
                 self.change_to_cli()
                 cmd = 'show ufm status'
                 out = self.run_command(cmd)
-                self.change_to_shell()
                 if 'High Availability Status' in out:
                     logging.debug(f'Running in HA mode : {str(self.device_name)}')
                     self.parse_ufm_mode_output(out)
@@ -100,8 +99,12 @@ class Apl_Host(Device):
         try:
             logging.debug(f'Trying to parse ufm mode to : {self.device_name}')
             regexs= ['Local.*\(','Peer.*\(']
-            self.master = re.search(regexs[0], output)[0].split()[2]
-            self.slave= re.search(regexs[1], output)[0].split()[2]
+            res =  re.search(regexs[0], output)
+            if res:
+                self.master = re.search(regexs[0], output)[0].split()[2]
+            res = re.search(regexs[1], output)
+            if res:
+                self.slave = re.search(regexs[1], output)[0].split()[2]
             self.find_ip_address(output)
         except Exception as e:
             logging.error(f'Exception retrived in parse ufm mode in {self.device_name} : {str(e)}')
@@ -233,6 +236,9 @@ class Apl_Host(Device):
 
     def change_to_shell(self):
         logging.debug("Change to shell mode in : " + self.device_name)
+        if not 'admin' in self.ssh_client.find_prompt():
+            self.set_enable_configure_terminal()
+
         cmd = '_shell'
         out = self.run_command(cmd)
         #TBD - some bug here ... out doesn't contains 'admin' in the prompt. i'm using find_prompt instead.
