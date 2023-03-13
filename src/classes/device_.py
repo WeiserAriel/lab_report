@@ -97,7 +97,7 @@ class Device:
         cmd = f'ufm_ha_cluster status'
         try:
             output = self.run_command(cmd)
-            if 'command not found' in output or 'cluster is not currently running on this node' in output or 'DRBD resource is not configured' in output:
+            if 'command not found' in output or 'cluster is not currently running on this node' in output or 'DRBD resource is not configured' in output or output == '':
                 self.ufm_mode = 'SA'
             else:
                 self.parse_ufm_mode_output(output)

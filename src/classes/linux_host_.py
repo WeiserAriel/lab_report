@@ -62,7 +62,7 @@ class Linux_Host(Device):
                 self.get_info_of_ufm_mode()
                 self.save_ufm_data()
                 self.check_if_ufm_is_running()
-                if self.check_if_ufm_is_running and \
+                if self.is_ufm_host_is_running and \
                         self.device_type != 'GEN2' and self.device_type != 'GEN3' and self.device_type != 'GEN4':
                     self.Cables_obj = Cables(self.device_name,self.owner)
 
