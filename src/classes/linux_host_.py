@@ -235,6 +235,7 @@ class Linux_Host(Device):
             cmd = '/hpc/local/bin/lshca -m normal -j -w roce'
             for tool in tools:
                 if not self.is_tool_installed(tool):
+                    logging.debug(f'tool {tool} does not install on : {self.device_name}')
                     flag = False
                     break
             if not flag:
