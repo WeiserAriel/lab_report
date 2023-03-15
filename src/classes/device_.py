@@ -48,12 +48,16 @@ class Device:
 
     def parse_ufm_mode_output(self,output):
 
-        if self.ssh_client.find_prompt() == '>':
-            logging.debug(f'need to recreate shell since we entered \'>\' mode in : {self.device_name}')
-            try:
-                self.SSHConnect(self.ip,self.username,self.passwor)
-            except Exception as e:
-                logging.error(f'Exception in recreation of SSH for : {self.device_name}')
+        #Relevant for GEN2/2.5/3.0 only
+        if self.device_type in ['GEN2','GEN25',]:
+            logging.debug(f'running find prompt for : {self.device_name}')
+            if self.ssh_client.find_prompt() == '>':
+                logging.debug(f'need to recreate shell since we entered \'>\' mode in : {self.device_name}')
+                try:
+                    self.SSHConnect(self.ip,self.username,self.passwor)
+                except Exception as e:
+                    logging.error(f'Exception in recreation of SSH for : {self.device_name}')
+
         logging.debug(f'found ufm in HA : {self.device_name}')
         self.ufm_mode = 'HA'
         cmds = [r'''ufm_ha_cluster status  | grep Masters''', \
@@ -564,7 +568,7 @@ class Device:
                     output = self.ssh_client.send_command_timing(cmd)
                     logging.debug('Running command for switch or ufmapl succusseded!')
                 except Exception as e:
-                    logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)}")
+                    logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)} for device : {self.device_name}")
                     logging.debug(f"checking if output is empty for : {str(self.device_name)}")
                 if output == "":
                     logging.debug(f"Yes, output if empty")
@@ -574,7 +578,7 @@ class Device:
                         output = self.ssh_client.send_command(cmd,read_timeout=30)
                         logging.debug(f"retry was finished succussfully")
                     except Exception as e:
-                        logging.error(f"Exception in self.ssh_client.send_command : {str(e)}")
+                        logging.error(f"Exception in self.ssh_client.send_command : {str(e)} for device: {self.device_name}")
                 if remove_asci == 'no':
                     return output
                 else:
