@@ -54,7 +54,7 @@ class Device:
             if self.ssh_client.find_prompt() == '>':
                 logging.debug(f'need to recreate shell since we entered \'>\' mode in : {self.device_name}')
                 try:
-                    self.SSHConnect(self.ip,self.username,self.passwor)
+                    self.SSHConnect(self.ip,self.username,self.password)
                 except Exception as e:
                     logging.error(f'Exception in recreation of SSH for : {self.device_name}')
 
@@ -575,6 +575,8 @@ class Device:
                     #for some reason when i debug i have to use different function.
                     try:
                         logging.debug(f"retry to send command with self.ssh_client.send_command")
+                        logging.debug(f'FOR DEBUGGGGGG : Type of self.ssh_client is {type(self.ssh_client)} ')
+                        logging.debug(f'annotions of send_command: \n {self.ssh_client.send_command.__annotations__}')
                         output = self.ssh_client.send_command(cmd,read_timeout=30)
                         logging.debug(f"retry was finished succussfully")
                     except Exception as e:
