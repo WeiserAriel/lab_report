@@ -217,7 +217,7 @@ class Apl_Host(Device):
     def confiure_appliance_license(self):
         logging.debug("start to confiure license to " + self.device_name)
         mac = self.hw_address
-        cmd = '/qa/qa/arielwe/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac
+        cmd = '/qa/qa/genlicense/genlicense 2   RESTRICTED_CMDS "secret" -o 3 ' + mac
         license = self.run_command(cmd,run_on_global='Yes')
 
         
@@ -229,11 +229,24 @@ class Apl_Host(Device):
         else:
             logging.error("couldn't get restricted license for : " +self.device_name)
 
-        cmd = 'fae license install ' + license
-        out = self.run_command(cmd)
-        has_shell = self.change_to_shell()
+        has_shell = self.install_license(license)
         return has_shell
 
+    def install_license(self,license):
+        logging.debug(f'start install license on : {self.device_name}')
+        try:
+            cmd = 'fae license install ' + license
+            out = self.run_command(cmd)
+        except Exception as e:
+            logging.error(f'Exception received in running fae command {str(cmd)} on : {self.device_name}')
+
+        try:
+            has_shell = self.change_to_shell()
+        except Exception as e:
+            logging.error(f'Exception received in install license function once try to change_to_shell on : {self.device_name}')
+
+        logging.debug(f'install license on : {self.device_name} completed succussfully')
+        return has_shell
     def change_to_shell(self):
         logging.debug("Change to shell mode in : " + self.device_name)
         if not 'admin' in self.ssh_client.find_prompt():

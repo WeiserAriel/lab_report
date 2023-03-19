@@ -510,9 +510,9 @@ class Device:
             try:
                 logging.getLogger("paramiko").setLevel(logging.WARNING)
                 client.set_missing_host_key_policy(policy=paramiko.AutoAddPolicy())
-                client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True)
-            except Exception as ex:
-                logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name))
+                client.connect(ip, port=22, username=username, password=passowrd, allow_agent=False, look_for_keys=True, banner_timeout=80)
+            except Exception as e:
+                logging.critical(msg="SSH Client wasn't established! Device name : " + str(self.device_name) + "Execption is :" + str(e))
                 return None
 
             logging.info(msg="Open SSH Client to :" + str(ip) +"(" + self.device_name + ')' + " established!")
