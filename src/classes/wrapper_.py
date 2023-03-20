@@ -118,7 +118,9 @@ class Wapper():
                             if (Wapper.is_device_in_list(dev_container, dev, group_name)):
                                 logging.debug("skipping current device since it's already registered on someone : " + dev)
                                 continue
-                            dev_container[dev] = devs_in_row_dict[dev],group_name
+                            else:
+                                logging.debug(f'adding {dev} into dev_container[dev]')
+                                dev_container[dev] = devs_in_row_dict[dev],group_name
 
         return dev_container
     @staticmethod
@@ -218,8 +220,10 @@ class Wapper():
             logging.error('Exception in Creating mian device object : ' + main_device + ' ' + str(e))
         device_list = []
         try:
+            print('inside Create_devices_objects')
+            print(list(device_list_ip.keys()).sort())
             for device in device_list_ip.keys():
-                logging.debug(" start Creating device object for :" + device)
+                logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
                 owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
                 #identify from DHCP what type of device is it:
                 logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
