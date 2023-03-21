@@ -221,7 +221,8 @@ class Wapper():
         device_list = []
         try:
             print('inside Create_devices_objects')
-            print(list(device_list_ip.keys()).sort())
+            print(len(list(device_list_ip.keys())))
+            print(sorted(list(device_list_ip.keys())))
             for device in device_list_ip.keys():
                 logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
                 owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
@@ -285,6 +286,9 @@ class Wapper():
                     logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
         except Exception as e:
             logging.error('Exception in Create_devices_objects for device : ' + device + " " + str(e))
+
+        print('device_list size')
+        print(len(device_list))
         return device_list
 
             #Print the results from the container.
