@@ -211,6 +211,8 @@ class Wapper():
         main_device = 'smg-ib-svr030'
         main_device_ip = '10.213.31.20'
         logging.debug("connecting to " + main_device+ " to create device list")
+        does_not_exist_in_dhcp = []
+        could_not_find_regex = []
         try:
             dev = Device(main_device_ip, main_device,'linux_host' ,'root', '3tango',None,'Nobody','Nobody')
             if dev.ssh_client == None:
@@ -233,7 +235,6 @@ class Wapper():
                 #if device has no next server it means that it was not found in DHCP
                 if 'next-server' in out:
                     logging.debug("device exist in dhcp : " + device)
-                    #TODO - need to check which row starts with IP
                     rows = out.split('\n')
                     for row in rows:
                         regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
@@ -247,6 +248,7 @@ class Wapper():
                         logging.debug("out  : " + out)
                         logging.debug("regex : " + regex)
                         logging.debug("Continue to the next device... ")
+                        could_not_find_regex.append(device)
                         continue
                     if device_name in Constants.ignore_devices:
                         continue
@@ -284,11 +286,15 @@ class Wapper():
                     device_list.append(tmp_device)
                 else:
                     logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
+                    does_not_exist_in_dhcp.append(device)
         except Exception as e:
             logging.error('Exception in Create_devices_objects for device : ' + device + " " + str(e))
 
         print('device_list size')
         print(len(device_list))
+        print(f'doesnt exist in dhcp : {str(len(does_not_exist_in_dhcp))}')
+        print(f'could_not_find_regex: {str(len(could_not_find_regex))}')
+        print(f'ignore list :{str(len(Constants.ignore_devices))}')
         return device_list
 
             #Print the results from the container.
