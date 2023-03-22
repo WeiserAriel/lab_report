@@ -256,19 +256,21 @@ class Wapper():
                         logging.debug(f'The device was exist in device_list : {device}. skipping')
                         continue
                     elif 'apl' in row:
-                        #check if this is gen2 or gen1
-                        logging.debug("device identiry as appliance : " + device_name)
                         if 'gen1' in row:
+                            logging.debug("device identify as apl gen1 : " + device_name)
                             tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner,group_name)
                         elif 'gen25' in row:
+                            logging.debug("device identify as apl gen25 : " + device_name)
                             tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner,group_name)
                         elif 'gen2' in row:
+                            logging.debug("device identify as apl gen2 : " + device_name)
                             tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner, group_name)
                         elif 'gen3' in row:
+                            logging.debug("device identify as apl gen3 : " + device_name)
                             tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner,group_name)
                         elif 'gen4' in row:
+                            logging.debug("device identify as apl gen4 : " + device_name)
                             tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner,group_name)
-                            #tmp_device = Apl_Host(device_ip, device_name, 'GEN4', dev,owner)
                         else:
                             logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
                     elif 'sw' in row or 'gw' in row or 'olg' in row:
