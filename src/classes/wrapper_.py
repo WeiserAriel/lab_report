@@ -231,7 +231,7 @@ class Wapper():
             print(len(list(device_list_ip.keys())))
             print(sorted(list(device_list_ip.keys())))
             counter = 0
-            for device in device_list_ip.keys():
+            for device,value in device_list_ip.items():
                 counter = counter +1
                 print(f'counter {str(counter)}')
                 print(f'device : {str(device)}')
