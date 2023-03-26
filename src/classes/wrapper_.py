@@ -230,7 +230,11 @@ class Wapper():
             print('inside Create_devices_objects')
             print(len(list(device_list_ip.keys())))
             print(sorted(list(device_list_ip.keys())))
+            counter = 0
             for device in device_list_ip.keys():
+                counter = counter +1
+                print(f'counter {str(counter)}')
+                print(f'device : {str(device)}')
                 logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
                 owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
                 #identify from DHCP what type of device is it:
@@ -249,6 +253,7 @@ class Wapper():
                             device_name = str(row.split(';')[2]).replace(" ","")
                             device_ip = str(row.split(';')[0]).replace(" ","")
                             breaks += 1
+                            print('break')
                             break
                     else:
                         logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
@@ -256,11 +261,14 @@ class Wapper():
                         logging.debug("regex : " + regex)
                         logging.debug("Continue to the next device... ")
                         could_not_find_regex.append(device)
+                        print('continue')
                         continue
                     if device_name in Constants.ignore_devices:
+                        print('continue')
                         continue
                     elif Wapper.is_exist_in_devices_list(device_list,device_name):
                         logging.debug(f'The device was exist in device_list : {device}. skipping')
+                        print('continue')
                         continue
                     elif 'apl' in row:
                         if 'gen1' in row:
