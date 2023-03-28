@@ -238,30 +238,37 @@ class Wapper():
                 logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
                 owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
                 #identify from DHCP what type of device is it:
-                logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
-                cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device
-                out = dev.run_command(cmd)
-                #if device has no next server it means that it was not found in DHCP
+                try:
+                    logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
+                    cmd = 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device
+                    out = dev.run_command(cmd)
+                except Exception as e:
+                    logging.error(f'Exception in running DHCP command for : {device} {str(e)}')
+                    continue
                 if 'next-server' in out:
-                    logging.debug("device exist in dhcp : " + device)
-                    rows = out.split('\n')
-                    for row in rows:
-                        regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
-                        found = Device.search_in_regex(row, regex)
-                        if found and (row.split('; ')[2].lower() == device.lower()):
-                            logging.debug(f'inside if found and : {dev}')
-                            device_name = str(row.split(';')[2]).replace(" ","")
-                            device_ip = str(row.split(';')[0]).replace(" ","")
-                            breaks += 1
-                            print('break')
-                            break
-                    else:
-                        logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
-                        logging.debug("out  : " + out)
-                        logging.debug("regex : " + regex)
-                        logging.debug("Continue to the next device... ")
-                        could_not_find_regex.append(device)
-                        print('continue')
+                    try:
+                        logging.debug("device exist in dhcp : " + device)
+                        rows = out.split('\n')
+                        for row in rows:
+                            regex = '\d{1,3}\.{1}\d{1,3}\.{1}\d{1,3}\.\d{1,3}.*next-server'
+                            found = Device.search_in_regex(row, regex)
+                            if found and (row.split('; ')[2].lower() == device.lower()):
+                                logging.debug(f'inside if found and : {dev}')
+                                device_name = str(row.split(';')[2]).replace(" ","")
+                                device_ip = str(row.split(';')[0]).replace(" ","")
+                                breaks += 1
+                                print('break')
+                                break
+                        else:
+                            logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
+                            logging.debug("out  : " + out)
+                            logging.debug("regex : " + regex)
+                            logging.debug("Continue to the next device... ")
+                            could_not_find_regex.append(device)
+                            print('continue')
+                            continue
+                    except Exception as e:
+                        logging.error(f'Exception in device exist in dhcp for : {str(device) : {str(e)}}')
                         continue
                     if device_name in Constants.ignore_devices:
                         print('continue')
@@ -272,33 +279,64 @@ class Wapper():
                         continue
                     elif 'apl' in row:
                         if 'gen1' in row:
-                            logging.debug("device identify as apl gen1 : " + device_name)
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner,group_name)
+                            try:
+                                logging.debug("device identify as apl gen1 : " + device_name)
+                                tmp_device = Apl_Host(device_ip, device_name, 'GEN1', dev,owner,group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Apl_host object gen1: {str(device) : {str(e)}}')
+                                continue
                         elif 'gen25' in row:
-                            logging.debug("device identify as apl gen25 : " + device_name)
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner,group_name)
+                            try:
+                                logging.debug("device identify as apl gen25 : " + device_name)
+                                tmp_device = Apl_Host(device_ip, device_name, 'GEN2.5', dev, owner,group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Apl_host object gen2.5: {str(device) : {str(e)}}')
+                                continue
                         elif 'gen2' in row:
-                            logging.debug("device identify as apl gen2 : " + device_name)
-                            tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner, group_name)
+                            try:
+                                logging.debug("device identify as apl gen2 : " + device_name)
+                                tmp_device = Apl_Host(device_ip, device_name, 'GEN2', dev, owner, group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Apl_host object gen2: {str(device) : {str(e)}}')
+                                continue
                         elif 'gen3' in row:
-                            logging.debug("device identify as apl gen3 : " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner,group_name)
+                            try:
+                                logging.debug("device identify as apl gen3 : " + device_name)
+                                tmp_device = Linux_Host(device_ip, device_name, 'GEN3', dev, owner,group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Linux_Host object gen3: {str(device) : {str(e)}}')
+                                continue
                         elif 'gen4' in row:
-                            logging.debug("device identify as apl gen4 : " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner,group_name)
+                            try:
+                                logging.debug("device identify as apl gen4 : " + device_name)
+                                tmp_device = Linux_Host(device_ip, device_name, 'GEN4', dev, owner,group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Linux_host object gen4: {str(device) : {str(e)}}')
+                                continue
                         else:
                             logging.error('Couldn\'t recognize the generation of the ufm appliance ' + str(device_name))
                     elif 'sw' in row or 'gw' in row or 'olg' in row:
-                        logging.debug("device identify as switch : " + device_name)
-                        tmp_device = Switch(device_ip, device_name, 'switch',dev,owner,group_name)
+                        try:
+                            logging.debug("device identify as switch : " + device_name)
+                            tmp_device = Switch(device_ip, device_name, 'switch',dev,owner,group_name)
+                        except Exception as e:
+                            logging.error(f'Exception in creating Switch object : {str(device) : {str(e)}}')
+                            continue
                     else:
                         if Wapper.is_virutal_machine(dev,device_name):
-                            logging.debug("device identify as virtual machine : " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name,'virtual machine', dev,owner,group_name)
+                            try:
+                                logging.debug("device identify as virtual machine : " + device_name)
+                                tmp_device = Linux_Host(device_ip, device_name,'virtual machine', dev,owner,group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Linux_Host object for virtual machine : {str(device) : {str(e)}}')
+                                continue
                         else:
-                            logging.debug("device identify as linux_host: " + device_name)
-                            tmp_device = Linux_Host(device_ip, device_name, 'linux_host', dev, owner, group_name)
-
+                            try:
+                                logging.debug("device identify as linux_host: " + device_name)
+                                tmp_device = Linux_Host(device_ip, device_name, 'linux_host', dev, owner, group_name)
+                            except Exception as e:
+                                logging.error(f'Exception in creating Linux_Host object for regualr host : {str(device) : {str(e)}}')
+                                continue
                     logging.debug("append device after creation to device list : " + device)
                     device_list.append(tmp_device)
                 else:
