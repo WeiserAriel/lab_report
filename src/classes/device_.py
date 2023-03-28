@@ -581,6 +581,7 @@ class Device:
                         logging.debug(f"retry was finished succussfully")
                     except Exception as e:
                         logging.error(f"Exception in self.ssh_client.send_command : {str(e)} for device: {self.device_name}")
+                        return None
                 if remove_asci == 'no':
                     return output
                 else:
@@ -597,6 +598,7 @@ class Device:
             except Exception as e:
                 logging.error(f"Exception in running command {str(e)} , \n command was : {cmd}" )
                 logging.error(f"output =\n\n{output}\n\n ")
+                return  None
 
         elif self.device_type in ['linux_host', 'virtual machine'] or run_on_global != None:
             try:
@@ -613,6 +615,7 @@ class Device:
                 logging.debug(f"run command - device is Linux machine or Virtual host {self.device_name} is done")
             except Exception as e:
                 logging.error(f"Excpetion in run command for Linux host : {str(e)} , command was : {cmd}")
+                return  None
 
     @staticmethod
     def search_in_regex(output, regex):

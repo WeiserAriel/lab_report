@@ -172,10 +172,13 @@ class Apl_Host(Device):
         self.dmidecode = super().get_dmidecode()
         
     def get_os_version(self):
-        logging.debug('running get os version for : ' + str(self.device_name))
-        cmd = 'show version'
-        regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
-        out = super().run_command(cmd)
+        try:
+            logging.debug('running get os version for : ' + str(self.device_name))
+            cmd = 'show version'
+            regex = '(Version summary:)(\s*)(\S*)(\s*)(\S*)(.*)'
+            out = super().run_command(cmd)
+        except Exception as e:
+            logging.error(f'Exception in get_os_version for : {self.device_name} : {str(e)}')
         if out:
             list = super().search_in_regex(out, regex)
             self.os_version = list[0][4]
