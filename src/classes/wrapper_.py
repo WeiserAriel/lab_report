@@ -275,7 +275,7 @@ class Wapper():
                         logging.error(f'Exception in device exist in dhcp for : {str(device) : {str(e)}}')
                         continue
                     if device_name in Constants.ignore_devices:
-                        print('continue')
+                        print(f'device {device} in ignore list : continue')
                         continue
                     elif Wapper.is_exist_in_devices_list(device_list,device_name):
                         logging.debug(f'The device was exist in device_list : {device}. skipping')
