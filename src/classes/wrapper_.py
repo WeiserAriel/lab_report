@@ -236,7 +236,11 @@ class Wapper():
                 print(f'counter {str(counter)}')
                 print(f'device : {str(device)}')
                 logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
-                owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
+                try:
+                    owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
+                    logging.debug(f'dividing owner and group name for : {device} succussed')
+                except Exception as e:
+                    logging.error(f'Exception in dividing owner and group name for : {device} : {str(e)}')
                 #identify from DHCP what type of device is it:
                 try:
                     logging.debug("running cmd : " + 'cat /auto/LIT/SCRIPTS/DHCPD/list | grep -i ' + device)
@@ -323,25 +327,37 @@ class Wapper():
                             logging.error(f'Exception in creating Switch object : {str(device) : {str(e)}}')
                             continue
                     else:
-                        if Wapper.is_virutal_machine(dev,device_name):
-                            try:
-                                logging.debug("device identify as virtual machine : " + device_name)
-                                tmp_device = Linux_Host(device_ip, device_name,'virtual machine', dev,owner,group_name)
-                            except Exception as e:
-                                logging.error(f'Exception in creating Linux_Host object for virtual machine : {str(device) : {str(e)}}')
-                                continue
-                        else:
-                            try:
-                                logging.debug("device identify as linux_host: " + device_name)
-                                tmp_device = Linux_Host(device_ip, device_name, 'linux_host', dev, owner, group_name)
-                            except Exception as e:
-                                logging.error(f'Exception in creating Linux_Host object for regualr host : {str(device) : {str(e)}}')
-                                continue
-                    logging.debug("append device after creation to device list : " + device)
-                    device_list.append(tmp_device)
+                        try:
+                            if Wapper.is_virutal_machine(dev,device_name):
+                                try:
+                                    logging.debug("device identify as virtual machine : " + device_name)
+                                    tmp_device = Linux_Host(device_ip, device_name,'virtual machine', dev,owner,group_name)
+                                except Exception as e:
+                                    logging.error(f'Exception in creating Linux_Host object for virtual machine : {str(device) : {str(e)}}')
+                                    continue
+                            else:
+                                try:
+                                    logging.debug("device identify as linux_host: " + device_name)
+                                    tmp_device = Linux_Host(device_ip, device_name, 'linux_host', dev, owner, group_name)
+                                except Exception as e:
+                                    logging.error(f'Exception in creating Linux_Host object for regualr host : {str(device) : {str(e)}}')
+                                    continue
+                        except Exception as e:
+                            logging.error(f'Exception in is_virtual_machine : {str(device)} : {str(e)}')
+                    try:
+                        logging.debug("append device after creation to device list : " + device)
+                        device_list.append(tmp_device)
+                        logging.debug("append device after creation to device list : " + device + ' is completed')
+                    except Exception as e:
+                        logging.error(f'Exception in append : {str(device)} : {str(e)}')
                 else:
-                    logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
-                    does_not_exist_in_dhcp.append(device)
+                    try:
+                        logging.debug("device not exist in dhcp : " + device + ", device will not be added to device list")
+                        does_not_exist_in_dhcp.append(device)
+                        logging.debug("device not exist in dhcp : " + device + " add succussfully")
+                    except Exception as e:
+                        logging.error(f'Exception in appending device to not exist in dhcp : {str(device)} : {str(e)}')
+
         except Exception as e:
             logging.error('Exception in Create_devices_objects for device : ' + device + " " + str(e))
 
