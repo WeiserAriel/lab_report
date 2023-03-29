@@ -48,9 +48,7 @@ def main():
     tmp = HCAs()
     email_list = Wapper.parse_email_file(args.email)
     device_list_ip = Wapper.parse_device_list(args.device_list)
-    print('inside main')
-    print(len(list(device_list_ip.keys())))
-    print(sorted(list(device_list_ip.keys())))
+
     devices_obj = Wapper.Create_devices_objects(device_list_ip)
     xls = XlsWriter(devices_obj,email_list)
     #counting number of error in log

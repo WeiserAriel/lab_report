@@ -216,7 +216,6 @@ class Wapper():
         does_not_exist_in_dhcp = []
         could_not_find_regex = []
         try:
-            print(f'inside of try, list_of_hosts = : {len(list_of_hosts)}')
             dev = Device(main_device_ip, main_device,'linux_host' ,'root', '3tango',None,'Nobody','Nobody')
             if dev.ssh_client == None:
                 logging.error('Couldnt create SSH connection for main device : ' + main_device + ' Exit script ')
@@ -227,14 +226,9 @@ class Wapper():
         #TODO
         breaks = 0
         try:
-            print('inside Create_devices_objects')
-            print(len(list(device_list_ip.keys())))
-            print(sorted(list(device_list_ip.keys())))
             counter = 0
             for device,value in device_list_ip.items():
                 counter = counter +1
-                print(f'counter {str(counter)}')
-                print(f'device : {str(device)}')
                 logging.debug(" Inside Create_devices_objects : start Creating device object for :" + device)
                 try:
                     owner, group_name = device_list_ip[device][0], device_list_ip[device][1]
@@ -261,7 +255,6 @@ class Wapper():
                                 device_name = str(row.split(';')[2]).replace(" ","")
                                 device_ip = str(row.split(';')[0]).replace(" ","")
                                 breaks += 1
-                                print('break')
                                 break
                         else:
                             logging.debug("couldn't find device name and device ip according to DHCP output for device : "  + device)
@@ -269,17 +262,14 @@ class Wapper():
                             logging.debug("regex : " + regex)
                             logging.debug("Continue to the next device... ")
                             could_not_find_regex.append(device)
-                            print('continue')
                             continue
                     except Exception as e:
                         logging.error(f'Exception in device exist in dhcp for : {str(device) : {str(e)}}')
                         continue
                     if device_name in Constants.ignore_devices:
-                        print(f'device {device} in ignore list : continue')
                         continue
                     elif Wapper.is_exist_in_devices_list(device_list,device_name):
                         logging.debug(f'The device was exist in device_list : {device}. skipping')
-                        print('continue')
                         continue
                     elif 'apl' in row:
                         if 'gen1' in row:
@@ -361,12 +351,10 @@ class Wapper():
         except Exception as e:
             logging.error('Exception in Create_devices_objects for device : ' + device + " " + str(e))
 
-        print('device_list size')
-        print(len(device_list))
-        print(f'doesnt exist in dhcp : {str(len(does_not_exist_in_dhcp))}')
+
         print(f'could_not_find_regex: {str(len(could_not_find_regex))}')
         print(f'ignore list :{str(len(Constants.ignore_devices))}')
-        print(f'number of breaks is : {str(breaks)}')
+
         return device_list
 
             #Print the results from the container.
