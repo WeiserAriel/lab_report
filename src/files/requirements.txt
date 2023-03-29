@@ -1,0 +1,15 @@
+requests
+urllib3
+shutil
+platform
+subprocess
+paramiko
+netmiko
+string
+ping3
+xmltodict
+glob
+datetime
+smtplib
+xlsxwriter
+email

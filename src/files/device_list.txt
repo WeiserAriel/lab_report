@@ -2,23 +2,8 @@
 #Examples of devices list :
 #You can use Regex as mentioned in the exammple, make sure to write comma after each device.
 #====================================================================================================
-Dmitry:r-hpc[23-36],r-hpc-gpu[01-06],r-hpc-hn01,r-hpc-mg[13-16],r-hpc-mg[19-22],r-hpc-sw[13-16],r-hpc-sw[19-23],r-hpc-sw[25-28],r-hpc35-005,r-hpc35-006,r-hpc36-021,r-hpc36-022,r-hpc37-041,r-hpc37-042,r-hpc38-061,r-hpc38-062,smg-ib-sw[37-39],
-Dmitry:r-hpc[17-22],r-hpc-mg[11-12],r-hpc-mg[17-18],r-hpc-sw[11-12],r-hpc-sw[17-18],smg-ib-apl015-gen3,smg-ib-apl016-gen3,smg-ib-apl012-gen2,smg-ib-apl013-gen2,
-Pavel:smg-ib-svr034,smg-ib-svr056,smg-ib-svr[019-020],smg-ib-vrt005,smg-ib-sw033,smg-ib-sw051,smg-ib-sw057,smg-ib-sw59,smg-ib-apl028-gen3,smg-ib-apl029-gen3,smg-ib-apl007-gen2,smg-ib-apl008-gen2,smg-ib-apl011-gen2
-Ariel:smg-ib-svr[024-025],smg-ib-svr029,smg-ib-sw025,
-Jenkins:smg-ib-jenkins02,
-Ofir:r-hpc[01-17],r-hpc-sw[01-10],r-hpc-mg[02-10],r-hpc-sw06,
-Un-Used: r-hpc-sw[29-30],
-Shoval:smg-ib-svr[061-064],smg-ib-sw050,smg-ib-sw054,smg-ib-sw055,smg-ib-sw052,smg-ib-apl019-gen4,smg-ib-apl020-gen4,smg-ib-apl005-gen25,smg-ib-apl006-gen25,smg-ib-sw021,smg-ib-apl027-gen3
-Dmitry:smg-ib-apl015-gen4,smg-ib-apl016-gen4,smg-ib-apl017-gen25,smg-ib-apl018-gen25,smg-ib-apl013-gen25,
-Dmitry:r-hpc-sw12,r-hpc-mg01,
-Ikhlas:r-hpc-mg23,r-hpc-gpu07,r-hpc-gpu08,r-hpc-sw032,r-hpc-sw33,
-Mohammed:smg-ib-vrt004,smg-ib-svr[004-005],smg-ib-sw011,smg-ib-svr021,smg-ib-apl023-gen3,smg-ib-apl026-gen3,smg-ib-sw[019-020],smg-ib-sw058,smg-ib-svr055,smg-ib-svr014,smg-ib-sw041
-Ghadir:smg-ib-svr027,smg-ib-svr036,smg-ib-svr[030-033],smg-ib-svr45,smg-ib-svr46,
-Ghadir:smg-ib-apl030-gen25,smg-ib-apl031-gen25,smg-ib-apl009-gen2,smg-ib-apl004-gen2,smg-ib-apl021-gen3,smg-ib-apl022-gen3,smg-ib-apl010-gen1,
-Ghadir:smg-ib-sw022,smg-ib-olg001-mgmt01,smg-ib-sw040,smg-ib-sw012,smg-ib-sw032,smg-ib-sw014,smg-ib-sw035,smg-ib-sw036,smg-ib-sw056,
-UFMAutomationSetup:smg-ib-svr41,smg-ib-svr42,smg-ib-svr43,smg-ib-svr44,smg-ib-apl012-gen25,smg-ib-apl011-gen25,smg-ib-svr010,smg-ib-svr011,smg-ib-svr[065-066],smg-ib-apl025-gen3,smg-ib-apl024-gen3,smg-ib-sw[017-018],smg-ib-sw053,
-Un-Used:
+
+Ariel:smg-ib-apl015-gen3,smg-ib-apl016-gen3,
 #========= All Range ========= Don't Touch ========================
 
 Not-Used:smg-ib-svr[01-99],smg-ib-svr[001-100]

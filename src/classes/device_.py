@@ -11,7 +11,7 @@ import paramiko
 from netmiko import ConnectHandler
 import string
 from ping3 import ping
-import abc
+
 
 from  src.classes.constant_ import Constants
 

@@ -4,7 +4,7 @@ from src.classes.device_ import Device
 from src.classes.Cables_ import Cables
 
 import logging
-import time
+
 
 
 
