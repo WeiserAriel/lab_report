@@ -13,7 +13,7 @@ import string
 from ping3 import ping
 
 
-from  src.classes.constant_ import Constants
+from src.classes.constant_ import Constants
 
 class Device:
     global_deivce_obj = None
@@ -571,13 +571,13 @@ class Device:
                     logging.error(f"Exception in self.ssh_client.send_command_timing : {str(e)} for device : {self.device_name}")
                     logging.debug(f"checking if output is empty for : {str(self.device_name)}")
                 if output == "":
-                    logging.debug(f"Yes, output if empty")
+                    logging.debug(f"Yes, output is empty")
                     #for some reason when i debug i have to use different function.
                     try:
                         logging.debug(f"retry to send command with self.ssh_client.send_command")
                         logging.debug(f'FOR DEBUGGGGGG : Type of self.ssh_client is {type(self.ssh_client)} ')
                         logging.debug(f'annotions of send_command: \n {self.ssh_client.send_command.__annotations__}')
-                        output = self.ssh_client.send_command(cmd,read_timeout=30)
+                        output = self.ssh_client.send_command(cmd,read_timeout=50)
                         logging.debug(f"retry was finished succussfully")
                     except Exception as e:
                         logging.error(f"Exception in self.ssh_client.send_command : {str(e)} for device: {self.device_name}")
