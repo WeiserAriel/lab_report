@@ -363,6 +363,7 @@ class Device:
 
     def is_tool_installed(self, tool_name):
         logging.debug('Checking if the tool name exist on : ' + self.device_name + ' tool name : ' + str(tool_name))
+        print('Checking if the tool name exist on : ' + self.device_name + ' tool name : ' + str(tool_name))
         try:
             cmd = 'which ' + tool_name
             out = self.run_command(cmd)
@@ -466,33 +467,21 @@ class Device:
 
 
 
-    def ping_device(self, host):
-
-        logging.debug("'Sending ping to " + str(host))
-        # Option for the number of packets as a function of
-        param = '-n' if platform.system().lower() == 'windows' else '-c'
-
-        # Building the command. Ex: "ping -c 1 google.com"
-        command = ['ping', param, '1', host]
-
-        return subprocess.call(command) == 0
-
-
     def ping_device_pyping(self, host):
-        logging.debug("'Sending ping to " + str(host))
+        logging.debug("'Sending ping to " + str(self.device_name))
         for t in range(1,5):
             try:
                 r = ping(host)
                 if r:
-                    logging.debug("'Sending ping to " + str(host) + ' succussded')
+                    logging.debug("'Sending ping to " + str(self.device_name) + ' succussded')
                     return True
                 else:
-                    logging.debug(f"Sending ping to {str(host)} failed for the {str(t)} time.. sleeping for 1 second.")
+                    logging.debug(f"Sending ping to {str(self.device_name)} failed for the {str(t)} time.. sleeping for 1 second.")
                     time.sleep(1)
             except Exception as e:
-                logging.error('Exeception in ping : ' + str(e))
+                logging.error(f'Exeception in ping :  + str(e) for {self.device_name}')
 
-        logging.debug("Sending ping to " + str(host) + ' failed for all # ' + str(t) + " times")
+        logging.debug("Sending ping to " + str(self.device_name) + ' failed for all # ' + str(t) + " times")
         return False
 
 
@@ -614,8 +603,8 @@ class Device:
                     return stdout.read().decode('utf-8')
                 logging.debug(f"run command - device is Linux machine or Virtual host {self.device_name} is done")
             except Exception as e:
-                logging.error(f"Excpetion in run command for Linux host : {str(e)} , command was : {cmd}")
-                return  None
+                logging.error(f"Excpetion in run command for Linux host - {str(self.device_name)}: {str(e)} , command was : {cmd}")
+                return None
 
     @staticmethod
     def search_in_regex(output, regex):
